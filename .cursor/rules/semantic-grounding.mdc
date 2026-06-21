@@ -1,0 +1,21 @@
+---
+description: Every data/metric request must resolve fields against the semantic layer first
+alwaysApply: true
+---
+
+# Semantic grounding — every request
+
+Any request that produces or references a **metric, KPI, or data field** — at **any tier**,
+including quick one-off answers — must go through the semantic layer **before** numbers are
+pulled or stated.
+
+1. Resolve each metric against `docs/DEFINITIONS.md` (formula, denominator, grain).
+2. Resolve each field against `docs/SEMANTIC.md` (table.column, scale, join key).
+3. If anything is **undefined or ambiguous → ask the user.** Do **not** guess column names,
+   denominators, or scale, and do **not** infer from legacy CSVs or similar-sounding columns.
+4. After the user clarifies, update `DEFINITIONS.md` / `SEMANTIC.md` and mention what was added.
+
+This is **grounding, not pipeline depth** — it does not require an intake contract or QA for
+a quick answer. It only guarantees the numbers are defined correctly.
+
+Do not publish or state headline numbers for an undefined metric until step 3 is done.

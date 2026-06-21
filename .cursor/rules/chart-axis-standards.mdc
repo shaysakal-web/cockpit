@@ -1,0 +1,20 @@
+---
+description: Chart axis standards — percent vs count Y axis, zero baseline, no P1+P2 on one chart
+alwaysApply: true
+---
+
+# Chart axis standards
+
+Applies to **every chart** produced in this project (matplotlib report scripts, findings
+graphs, signal charts, deck visuals).
+
+1. **Y-axis units follow the metric.**
+   - **Percentage / rate** series (take rate, retention %, conversion): format Y ticks as
+     percentages (e.g. `20%`, `30%`) — use `matplotlib.ticker.PercentFormatter`.
+   - **Count / quantity** series (acquisition volume, new customers, any quantity):
+     plain integer numbers. **Never label a count as a percentage.**
+2. **Y-axis starts at 0.** The maximum keeps auto-scaling to the data (do not cap the
+   max). Applies to both line and bar charts.
+3. **Do not plot metrics with very different scales/levels on the same chart** (e.g. a
+   first-period and a later-period retention together) — combined trends become
+   unreadable. One chart per series/level.

@@ -1,0 +1,44 @@
+---
+description: Regenerate analysis outputs on request; do not reuse stale dated files
+alwaysApply: true
+---
+
+# Analysis — fresh outputs only
+
+When the user asks to **perform analysis**, **run a check**, **show metrics**, or **build a report/pack** — or when any pipeline phase **pulls or cites numbers** — follow this freshness gate before stating results.
+
+## Default: recreate, do not reuse
+
+1. **Re-run** the pull pipeline named in the intake contract, `pull_manifest.md`, or `docs/AGENT_ROLES.local.md` (SQL, Python task runner, API export, etc.) for the **report date** of this request.
+2. **Report date** — use today (`YYYY-MM-DD`) unless the user or `intake_contract.md` states another date explicitly.
+3. **Write new dated outputs** with a `YYYY-MM-DD_` prefix (or the path/date convention documented in the project domain skill).
+4. **Do not** answer from older CSV, Parquet, HTML, PDF, or rollup files just because they exist on disk — even if a “latest file” helper would match.
+
+## When reusing an existing file is allowed
+
+Only if **both** are true:
+
+- **Same context** — same study, metrics, filters, and cuts as the current request (not “similar” analysis).
+- **Same report date** — the file’s date prefix (or embedded report date) matches the date for **this** request.
+
+If either fails, regenerate.
+
+## Downstream artifacts (charts, decks, HTML)
+
+Re-rendering a report or deck from **already-validated** pull outputs for the **same report date and scope** is allowed — that is not a substitute for skipping the **data pull**. Raw extracts must still be fresh per the rules above.
+
+## After running
+
+State **which script or command ran**, **report date**, and **output paths** used for the numbers shown.
+
+If the database or source is unavailable, say so and ask whether to wait or proceed with a partial rerun — **do not** silently substitute yesterday’s files.
+
+## Project-specific rules
+
+Headline-metric choice, output directories, task ids, and domain QA checks live in:
+
+- `docs/AGENT_ROLES.local.md` — pull commands and publish scripts
+- `.cursor/skills/<domain-skill>/SKILL.md` — how this repo runs tasks and names files
+- `docs/DATA_INTEGRITY_CHECKLIST.md` — extra freshness and integrity checks
+
+When those docs conflict with a convenience shortcut, **follow the project docs**.

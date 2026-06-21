@@ -1,0 +1,62 @@
+{
+  "analyses": [
+    {
+      "id": "dq_crm_products",
+      "label": "CRM product mapping",
+      "category": "DB checks",
+      "description": "Fail when CRM transactions for goslim/sveltetraining have no product mapping (since 2026-01-01). Check dry-run to skip Slack/email alerts.",
+      "script": "scripts/core/data_quality_runner.py",
+      "extra_argv": ["--config", "config/checks/single/crm-products.yml"],
+      "params": [
+        {
+          "name": "dry-run",
+          "type": "checkbox",
+          "flag": "--dry-run",
+          "label": "Dry run (skip alerts)"
+        }
+      ],
+      "artifact": {
+        "glob": "reports/data-quality/runs/*_results.json",
+        "kind": "json",
+        "view_kind": "html"
+      },
+      "report_group": "runs"
+    },
+    {
+      "id": "dq_new_accounts",
+      "label": "New accounts unified mapping",
+      "category": "DB checks",
+      "description": "Fail when ad-level spend in the last 30 days has no unified account mapping. Check dry-run to skip Slack/email alerts.",
+      "script": "scripts/core/data_quality_runner.py",
+      "extra_argv": ["--config", "config/checks/single/new-accounts.yml"],
+      "params": [
+        {
+          "name": "dry-run",
+          "type": "checkbox",
+          "flag": "--dry-run",
+          "label": "Dry run (skip alerts)"
+        }
+      ],
+      "artifact": {
+        "glob": "reports/data-quality/runs/*_results.json",
+        "kind": "json",
+        "view_kind": "html"
+      },
+      "report_group": "runs"
+    },
+    {
+      "id": "dq_landing_page",
+      "label": "Landing page vs Google Sheet",
+      "category": "Landing page",
+      "description": "Compare DB account/landing-page pairs (FB spend since 2026-05-01) against the Google Sheet; export missing pairs CSV.",
+      "script": "scripts/checks/run_landing_page_qa.py",
+      "params": [],
+      "artifact": {
+        "path": "reports/data-quality/landing_page_missing_pairs.csv",
+        "kind": "csv",
+        "view_kind": "html"
+      },
+      "report_group": "landing_page_missing_pairs.csv"
+    }
+  ]
+}

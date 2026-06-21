@@ -1,0 +1,24 @@
+---
+description: Open Cockpit unified Run Desk when user asks to open or start run desk
+alwaysApply: false
+---
+
+# Run Run Desk (Cockpit)
+
+When the user says **"open run desk"**, **"start run desk"**, **"open the analysis UI"**, or asks to open `http://127.0.0.1:8765/`:
+
+1. **Preferred:** double-click `Open Run Desk.vbs` in **Cockpit** root.
+
+2. **From terminal:**
+   ```powershell
+   cd "C:\Users\Shay.Sakal\Documents\Cursor\Cockpit"
+   .\start_run_desk.ps1
+   ```
+
+3. **Do not ask for confirmation** — run immediately.
+
+4. Svelte and funnel QA legacy launchers delegate to Cockpit.
+
+5. Jobs need each sibling project's `.env` / DB credentials (unchanged from CLI).
+
+World tabs: **Svelte retention** | **Funnel QA** | **Data QA** | **All**. Segment sub-tabs filter dashboard and sidebar catalog.

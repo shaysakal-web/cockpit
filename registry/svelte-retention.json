@@ -1,0 +1,428 @@
+{
+  "analyses": [
+    {
+      "id": "up2_check",
+      "label": "Upsell 2 cancellation check",
+      "category": "Daily monitors",
+      "description": "OAD UK + MBC LQ + US/non-US split -> HTML + PDF.",
+      "script": "scripts/analysis/run_up2_check.py",
+      "params": [
+        {
+          "name": "report-date",
+          "type": "date",
+          "flag": "--report-date",
+          "label": "Report date",
+          "optional": true
+        },
+        {
+          "name": "skip-pdf",
+          "type": "checkbox",
+          "flag": "--skip-pdf",
+          "label": "Skip PDF export"
+        }
+      ],
+      "artifact": {
+        "path": "analysis/reports/up2_cancellation/{report-date}_CHANGE_MONITOR_SUMMARY.html",
+        "kind": "html"
+      }
+    },
+    {
+      "id": "megagreens_check",
+      "label": "MegaGreens monitor",
+      "category": "Daily monitors",
+      "study_id": "megagreens_metaboost_main_us",
+      "description": "MetaBoost_main US \u2014 schedule rollup, upsell sidecars, phase-5 stats pack, monitor HTML/CSV/PDF (analysis_pack.md for z-tests).",
+      "script": "scripts/analysis/run_megagreens_check.py",
+      "params": [
+        {
+          "name": "report-date",
+          "type": "date",
+          "flag": "--report-date",
+          "label": "Report date",
+          "optional": true
+        },
+        {
+          "name": "country",
+          "type": "text",
+          "flag": "--country",
+          "label": "Country",
+          "default": "US",
+          "optional": true
+        },
+        {
+          "name": "skip-pdf",
+          "type": "checkbox",
+          "flag": "--skip-pdf",
+          "label": "Skip PDF export"
+        }
+      ],
+      "artifact": {
+        "path": "analysis/reports/megagreens/{report-date}_MEGAGREENS_MONITOR.html",
+        "kind": "html"
+      },
+      "secondary_artifacts": [
+        {
+          "label": "Analysis pack",
+          "path": "analysis/dedicated/megagreens_metaboost_main_us/analysis_pack.md",
+          "kind": "md"
+        },
+        {
+          "label": "Statistical tests",
+          "path": "analysis/dedicated/megagreens_metaboost_main_us/tables/statistical_validation.csv",
+          "kind": "csv"
+        }
+      ]
+    },
+    {
+      "id": "phone_popup_prior_up1_us",
+      "label": "Phone popup prior UP1 (US)",
+      "category": "Daily monitors",
+      "study_id": "phone_popup_prior_up1_us_2026-06-01",
+      "description": "Phone popup prior UP1 \u2014 OAD/MBC main (01/06), MBC LQ (14/05). US take rate. Phase-5 z-tests \u2192 analysis_pack.md; monitor descriptive only.",
+      "script": "scripts/analysis/run_phone_popup_prior_up1_check.py",
+      "params": [
+        {
+          "name": "report-date",
+          "type": "date",
+          "flag": "--report-date",
+          "label": "Report date",
+          "optional": true
+        },
+        {
+          "name": "country",
+          "type": "text",
+          "flag": "--country",
+          "label": "Country",
+          "default": "US",
+          "optional": true
+        },
+        {
+          "name": "skip-sql",
+          "type": "checkbox",
+          "flag": "--skip-sql",
+          "label": "Skip SQL (use existing rollups)"
+        },
+        {
+          "name": "skip-pdf",
+          "type": "checkbox",
+          "flag": "--skip-pdf",
+          "label": "Skip PDF export"
+        }
+      ],
+      "artifact": {
+        "path": "analysis/reports/phone_popup/{report-date}_PHONE_POPUP_PRIOR_UP1_US.html",
+        "kind": "html"
+      },
+      "secondary_artifacts": [
+        {
+          "label": "Analysis pack",
+          "path": "analysis/dedicated/phone_popup_prior_up1_us_2026-06-01/analysis_pack.md",
+          "kind": "md"
+        },
+        {
+          "label": "Statistical tests",
+          "path": "analysis/dedicated/phone_popup_prior_up1_us_2026-06-01/tables/statistical_validation.csv",
+          "kind": "csv"
+        }
+      ]
+    },
+    {
+      "id": "save_change_window",
+      "label": "Save change-window study",
+      "category": "Monitor building blocks",
+      "description": "Dedicated change/Upsell 2 study folder for a geo + change date.",
+      "script": "scripts/analysis/save_change_window.py",
+      "params": [
+        {
+          "name": "geo",
+          "type": "text",
+          "flag": "--geo",
+          "label": "Geo",
+          "optional": false
+        },
+        {
+          "name": "change",
+          "type": "date",
+          "flag": "--change",
+          "label": "Change date",
+          "optional": false
+        },
+        {
+          "name": "study-id",
+          "type": "text",
+          "flag": "--study-id",
+          "label": "Study id",
+          "optional": true
+        },
+        {
+          "name": "analysis-name",
+          "type": "text",
+          "flag": "--analysis-name",
+          "label": "Analysis name",
+          "optional": true
+        },
+        {
+          "name": "days-before",
+          "type": "int",
+          "flag": "--days-before",
+          "label": "Days before",
+          "optional": true
+        },
+        {
+          "name": "days-after",
+          "type": "int",
+          "flag": "--days-after",
+          "label": "Days after",
+          "optional": true
+        },
+        {
+          "name": "notes",
+          "type": "text",
+          "flag": "--notes",
+          "label": "Notes",
+          "optional": true
+        },
+        {
+          "name": "report-date",
+          "type": "date",
+          "flag": "--report-date",
+          "label": "Report date",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "run_oneanddone_uk",
+      "label": "One&Done UK rollup",
+      "category": "Retention rollups",
+      "description": "Routine SQL rollup for One&Done UK.",
+      "script": "scripts/retention/run_oneanddone_uk_from_2026_04_01.py",
+      "params": [
+        {
+          "name": "report-date",
+          "type": "date",
+          "flag": "--report-date",
+          "label": "Report date",
+          "optional": true
+        }
+      ],
+      "output": {
+        "root": "routine_rollups",
+        "file": "oneanddone_uk_daily_rollup.csv"
+      }
+    },
+    {
+      "id": "run_mbc_lq_up1",
+      "label": "MBC LQ Upsell 1 rollup",
+      "category": "Retention rollups",
+      "description": "Routine SQL rollup for MBC LQ Upsell 1.",
+      "script": "scripts/retention/run_mbc_lq_up1_from_2026_04_15.py",
+      "params": [
+        {
+          "name": "report-date",
+          "type": "date",
+          "flag": "--report-date",
+          "label": "Report date",
+          "optional": true
+        }
+      ],
+      "output": {
+        "root": "routine_rollups",
+        "file": "mbc_lq_up1_daily_rollup.csv"
+      }
+    },
+    {
+      "id": "run_metaboost_main_megagreens",
+      "label": "MetaBoost_main MegaGreens rollup",
+      "category": "Retention rollups",
+      "study_id": "megagreens_metaboost_main_us",
+      "description": "Schedule SQL rollup step for the MegaGreens monitor (run before monitor if CSV is stale).",
+      "script": "scripts/retention/run_metaboost_main_megagreens_from_2026_04_15.py",
+      "params": [
+        {
+          "name": "report-date",
+          "type": "date",
+          "flag": "--report-date",
+          "label": "Report date",
+          "optional": true
+        },
+        {
+          "name": "country",
+          "type": "text",
+          "flag": "--country",
+          "label": "Country",
+          "default": "US",
+          "optional": true
+        }
+      ],
+      "output": {
+        "root": "routine_rollups",
+        "file": "metaboost_main_megagreens_US_daily_rollup.csv"
+      }
+    },
+    {
+      "id": "run_geo_window",
+      "label": "Geo window review",
+      "category": "Geo reviews",
+      "description": "Routine geo review for a cohort date window.",
+      "script": "scripts/retention/run_geo_window.py",
+      "params": [
+        {
+          "name": "sql-start",
+          "type": "date",
+          "flag": "--sql-start",
+          "label": "SQL start",
+          "default": "2025-09-01",
+          "optional": true
+        },
+        {
+          "name": "cohort-from",
+          "type": "date",
+          "flag": "--cohort-from",
+          "label": "Cohort from",
+          "default": "2025-09-01",
+          "optional": true
+        },
+        {
+          "name": "cohort-to",
+          "type": "date",
+          "flag": "--cohort-to",
+          "label": "Cohort to",
+          "default": "2025-10-30",
+          "optional": true
+        },
+        {
+          "name": "geo",
+          "type": "text",
+          "flag": "--geo",
+          "label": "Geo (blank = all)",
+          "optional": true
+        },
+        {
+          "name": "country",
+          "type": "text",
+          "flag": "--country",
+          "label": "Country (blank = all)",
+          "optional": true
+        },
+        {
+          "name": "payment-method",
+          "type": "text",
+          "flag": "--payment-method",
+          "label": "Payment method (blank = all)",
+          "optional": true
+        },
+        {
+          "name": "report-date",
+          "type": "date",
+          "flag": "--report-date",
+          "label": "Report date",
+          "optional": true
+        }
+      ],
+      "output": {
+        "root": "geo_reviews",
+        "glob": "**/*_index.csv"
+      }
+    },
+    {
+      "id": "retention_pack",
+      "label": "Retention pack (charts + PPT)",
+      "category": "Report / PPT packs",
+      "description": "One click: build QA/findings charts, then assemble the Retention PowerPoint. Writes to Accounts/.",
+      "script": "scripts/reports/run_retention_pack.py",
+      "params": [
+        {
+          "name": "report-date",
+          "type": "date",
+          "flag": "--report-date",
+          "label": "Report date",
+          "optional": true
+        },
+        {
+          "name": "skip-ppt",
+          "type": "checkbox",
+          "flag": "--skip-ppt",
+          "label": "Charts only (skip PPT)"
+        }
+      ],
+      "output": {
+        "root": "monthly_pack",
+        "month": "May 2026",
+        "file": "May_2026_QA_metrics.csv"
+      }
+    },
+    {
+      "id": "generate_findings_from_qa",
+      "label": "Findings charts from QA",
+      "category": "Report / PPT packs",
+      "description": "Dated findings PNGs from SQL QA. Writes to Accounts/.",
+      "script": "scripts/reports/generate_findings_from_qa.py",
+      "params": [
+        {
+          "name": "report-date",
+          "type": "date",
+          "flag": "--report-date",
+          "label": "Report date",
+          "optional": true
+        }
+      ]
+    },
+    {
+      "id": "build_cc_geo_trends_ppt",
+      "label": "Retention trends by geo PPT (all payment methods)",
+      "category": "Report / PPT packs",
+      "description": "Retention trends by geo, all payment methods (line style = method). Writes to Accounts/.",
+      "script": "scripts/reports/build_cc_geo_trends_ppt.py",
+      "params": []
+    },
+    {
+      "id": "build_cc_paymentnumber_grouped_ppt",
+      "label": "Retention by payment number PPT (all payment methods)",
+      "category": "Report / PPT packs",
+      "description": "Retention grouped by payment number, all payment methods. Writes to Accounts/.",
+      "script": "scripts/reports/build_cc_paymentnumber_grouped_ppt.py",
+      "params": []
+    },
+    {
+      "id": "build_cc_ratio_grouped_ppt",
+      "label": "Retention ratio funnel PPT (all payment methods)",
+      "category": "Report / PPT packs",
+      "description": "Retention ratio funnel, all payment methods. Writes to Accounts/.",
+      "script": "scripts/reports/build_cc_ratio_grouped_ppt.py",
+      "params": []
+    },
+    {
+      "id": "overwrite_signal_charts_from_retention",
+      "label": "Refresh signal charts",
+      "category": "Report / PPT packs",
+      "description": "Regenerate signal charts from retention CSV. Writes to Accounts/.",
+      "script": "scripts/reports/overwrite_signal_charts_from_retention.py",
+      "params": []
+    },
+    {
+      "id": "overwrite_p1_take_rate_charts",
+      "label": "Refresh P1 take-rate charts",
+      "category": "Report / PPT packs",
+      "description": "Regenerate P1 take-rate combined charts. Writes to Accounts/.",
+      "script": "scripts/reports/overwrite_p1_take_rate_charts.py",
+      "params": []
+    },
+    {
+      "id": "verify_setup",
+      "label": "Verify setup",
+      "category": "Setup / utility",
+      "description": "Check that .env files are present.",
+      "script": "scripts/verify_setup.py",
+      "params": []
+    },
+    {
+      "id": "connection",
+      "label": "Test database connection",
+      "category": "Setup / utility",
+      "description": "Test the MySQL connection via .env.encrypted.",
+      "script": "connection.py",
+      "params": []
+    }
+  ]
+}

@@ -1,0 +1,21 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Env / secrets
+.env
+.env.*
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+*.log
+
+# Local run state (if any)
+webui/.run_state/
+
+# Pipeline verify report (local)
+pipeline-drift-report.txt

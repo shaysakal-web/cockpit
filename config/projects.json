@@ -1,0 +1,52 @@
+{
+  "projects": [
+    {
+      "id": "svelte-retention",
+      "label": "Svelte subscription analysis",
+      "short_label": "Svelte retention",
+      "root": "C:/Users/Shay.Sakal/Documents/Cursor/Svelte subscription analysis",
+      "registry": "registry/svelte-retention.json",
+      "report_roots": [
+        { "path": "analysis/reports", "label": "Repo reports" },
+        { "path": "analysis/dedicated", "label": "Dedicated studies" }
+      ],
+      "dashboard_categories": [
+        "Daily monitors",
+        "Retention rollups",
+        "Geo reviews",
+        "Report / PPT packs"
+      ],
+      "output_probe": "svelte"
+    },
+    {
+      "id": "funny-funnel-qa",
+      "label": "Subscription funnel QA",
+      "short_label": "Funnel QA",
+      "root": "C:/Users/Shay.Sakal/Documents/Cursor/bmad/funny funnel qa",
+      "registry": "registry/funny-funnel-qa.json",
+      "report_roots": [
+        { "path": "reports", "label": "QA and monitor reports" }
+      ],
+      "dashboard_categories": [
+        "Daily monitors",
+        "Funnel QA"
+      ],
+      "output_probe": null
+    },
+    {
+      "id": "data-quality",
+      "label": "Data quality",
+      "short_label": "Data QA",
+      "root": "C:/Users/Shay.Sakal/Documents/Cursor/Data quality",
+      "registry": "registry/data-quality.json",
+      "report_roots": [
+        { "path": "reports/data-quality", "label": "QA reports" }
+      ],
+      "dashboard_categories": [
+        "DB checks",
+        "Landing page"
+      ],
+      "output_probe": null
+    }
+  ]
+}

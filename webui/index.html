@@ -1,0 +1,1832 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Run Desk — Cockpit</title>
+  <style>
+    :root {
+      --bg: #0a0a0b;
+      --surface: #141416;
+      --surface2: #1c1c1f;
+      --surface3: #232327;
+      --border: #2a2a2e;
+      --border-strong: #3a3a40;
+      --text: #f4f4f5;
+      /* Lifted from #a1a1aa so muted copy clears WCAG AA on dark surfaces. */
+      --muted: #b6b6c0;
+      --accent: #38bdf8;
+      --accent-strong: #0284c7;
+      --accent-dim: rgba(56, 189, 248, 0.14);
+      --ok: #4ade80;
+      --warn: #fbbf24;
+      --fail: #f87171;
+      --radius: 12px;
+      --topbar-h: 4rem;
+      font-family: "Segoe UI", system-ui, sans-serif;
+      line-height: 1.5;
+      color: var(--text);
+      background: var(--bg);
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      background:
+        radial-gradient(ellipse 90% 55% at 50% -10%, var(--accent-dim), transparent),
+        var(--bg);
+    }
+    a { color: var(--accent); }
+    :focus-visible {
+      outline: 2px solid var(--accent);
+      outline-offset: 2px;
+      border-radius: 4px;
+    }
+    .skip-link {
+      position: absolute;
+      left: -999px;
+      top: 0.5rem;
+      z-index: 100;
+      background: var(--accent);
+      color: #04121b;
+      padding: 0.5rem 0.9rem;
+      border-radius: 8px;
+      font-weight: 700;
+    }
+    .skip-link:focus { left: 0.75rem; }
+
+    /* ---- Top bar -------------------------------------------------------- */
+    .topbar {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      display: flex;
+      align-items: center;
+      gap: 1.25rem;
+      height: var(--topbar-h);
+      padding: 0 clamp(0.85rem, 2vw, 1.6rem);
+      background: rgba(10, 10, 11, 0.82);
+      backdrop-filter: blur(10px);
+      border-bottom: 1px solid var(--border);
+    }
+    .brand { display: flex; align-items: center; gap: 0.75rem; }
+    .brand-logo-wrap {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 2.5rem;
+      padding: 0.2rem 0.45rem;
+      border-radius: 8px;
+      background: #000;
+      border: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .brand-logo {
+      display: block;
+      height: 2.1rem;
+      width: auto;
+      max-width: 5.5rem;
+      object-fit: contain;
+    }
+    .brand h1 {
+      font-size: 1.05rem;
+      font-weight: 800;
+      margin: 0;
+      letter-spacing: -0.02em;
+    }
+    .brand-sub { margin: 0; font-size: 0.72rem; color: var(--muted); }
+    .search { flex: 1; max-width: 30rem; position: relative; }
+    .search input {
+      width: 100%;
+      padding: 0.5rem 0.75rem 0.5rem 2.1rem;
+      border: 1px solid var(--border);
+      border-radius: 9px;
+      background: var(--surface2);
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+    .search::before {
+      content: "⌕";
+      position: absolute;
+      left: 0.7rem; top: 50%;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 1.05rem;
+    }
+    .last-run {
+      margin-left: auto;
+      font-size: 0.78rem;
+      color: var(--muted);
+      text-align: right;
+      max-width: 18rem;
+    }
+    .last-run b { color: var(--text); font-weight: 600; }
+    .last-run .dot { color: var(--ok); }
+    .last-run .dot.fail { color: var(--fail); }
+    .last-run .dot.running { color: var(--accent); animation: pulse-dot 1.2s ease-in-out infinite; }
+    @keyframes pulse-dot { 0%, 100% { opacity: 1; } 50% { opacity: 0.35; } }
+    .server-action {
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      height: 2rem;
+      padding: 0 0.65rem;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 700;
+      white-space: nowrap;
+    }
+    .server-action:hover { border-color: var(--accent); background: var(--surface3); }
+    .server-action:disabled { cursor: wait; opacity: 0.65; }
+    .sidebar-toggle {
+      flex: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.35rem;
+      min-width: 2rem;
+      height: 2rem;
+      padding: 0 0.55rem;
+      border: 1px solid var(--border-strong);
+      border-radius: 8px;
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.82rem;
+      font-weight: 600;
+      line-height: 1;
+      transition: border-color 0.12s, background 0.12s;
+    }
+    .sidebar-toggle:hover { border-color: var(--accent); background: var(--surface3); }
+    .sidebar-toggle .toggle-glyph { font-size: 1rem; line-height: 1; }
+    .sidebar-toggle[aria-expanded="false"] .label-expanded { display: none; }
+    .sidebar-toggle[aria-expanded="true"] .label-collapsed { display: none; }
+    .shell:not(.collapsed) .sidebar-toggle { display: none; }
+
+    /* ---- Shell ---------------------------------------------------------- */
+    .shell {
+      display: grid;
+      grid-template-columns: 17rem minmax(0, 1fr);
+      align-items: start;
+      gap: 0;
+      min-height: calc(100vh - var(--topbar-h));
+    }
+    .shell.collapsed { grid-template-columns: 0 minmax(0, 1fr); }
+    .shell.collapsed .sidebar {
+      visibility: hidden;
+      overflow: hidden;
+      width: 0;
+      padding: 0;
+      border: none;
+    }
+
+    .sidebar {
+      position: sticky;
+      top: var(--topbar-h);
+      align-self: start;
+      height: calc(100vh - var(--topbar-h));
+      overflow-y: auto;
+      overflow-x: hidden;
+      border-right: 1px solid var(--border);
+      padding: 0.85rem 0.85rem 2rem;
+      background: var(--surface);
+      transition: width 0.18s ease, padding 0.18s ease, visibility 0.18s ease;
+    }
+    .sidebar-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 0.5rem;
+      margin-bottom: 0.65rem;
+      padding-bottom: 0.65rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .sidebar-head-title {
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      font-weight: 700;
+    }
+    .sidebar-collapse {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.35rem;
+      padding: 0.35rem 0.55rem;
+      border: 1px solid var(--border-strong);
+      border-radius: 7px;
+      background: var(--surface2);
+      color: var(--text);
+      cursor: pointer;
+      font: inherit;
+      font-size: 0.78rem;
+      font-weight: 600;
+      white-space: nowrap;
+      transition: border-color 0.12s, background 0.12s;
+    }
+    .sidebar-collapse:hover { border-color: var(--accent); background: var(--surface3); }
+    .shell.collapsed .sidebar-collapse { display: none; }
+    .nav-home {
+      display: flex; align-items: center; gap: 0.5rem;
+      width: 100%;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 0.5rem 0.6rem;
+      margin-bottom: 0.75rem;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 600;
+      text-align: left;
+    }
+    .nav-home:hover { border-color: var(--border-strong); }
+    .nav-home.active { background: var(--accent-dim); border-color: var(--accent); }
+
+    .cat { margin-bottom: 0.65rem; }
+    .cat-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.35rem;
+      width: 100%;
+      margin: 0 0 0.35rem;
+      padding: 0.35rem 0.45rem;
+      border: none;
+      border-radius: 7px;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.66rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: left;
+      transition: background 0.12s, color 0.12s;
+    }
+    .cat-toggle:hover { background: var(--surface2); color: var(--text); }
+    .cat-toggle .chev {
+      display: inline-block;
+      font-size: 0.55rem;
+      transition: transform 0.15s ease;
+      color: var(--accent);
+    }
+    .cat.collapsed .cat-toggle .chev { transform: rotate(-90deg); }
+    .cat.collapsed .cat-body { display: none; }
+    .cat-title { display: none; }
+    .analysis-btn {
+      display: block;
+      position: relative;
+      width: 100%;
+      text-align: left;
+      background: transparent;
+      color: var(--text);
+      border: 1px solid transparent;
+      border-radius: 8px;
+      padding: 0.5rem 0.65rem 0.5rem 0.8rem;
+      margin-bottom: 0.2rem;
+      cursor: pointer;
+      font-size: 0.88rem;
+      font-weight: 500;
+      transition: background 0.12s, border-color 0.12s;
+    }
+    .analysis-btn::before {
+      content: "";
+      position: absolute;
+      left: 0; top: 0.55rem; bottom: 0.55rem;
+      width: 3px;
+      border-radius: 3px;
+      background: transparent;
+      transition: background 0.12s;
+    }
+    .analysis-btn:hover { background: var(--surface2); }
+    .analysis-btn.active { background: var(--accent-dim); }
+    .analysis-btn.active::before { background: var(--accent); }
+    .analysis-btn.active .btn-label { font-weight: 700; }
+    .analysis-btn.running .btn-label::after {
+      content: " · running";
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    .btn-label { display: flex; align-items: center; gap: 0.4rem; }
+    .pill {
+      font-size: 0.6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      padding: 0.05rem 0.3rem;
+      border-radius: 4px;
+      background: var(--surface3);
+      color: var(--muted);
+    }
+    .empty-hint { color: var(--muted); font-size: 0.85rem; padding: 0.5rem 0.25rem; }
+
+    /* ---- Work area ------------------------------------------------------ */
+    .work {
+      padding: 1.5rem clamp(1rem, 3vw, 2.5rem) 3rem;
+      min-width: 0;
+    }
+    .work:focus { outline: none; }
+    .view { animation: fade 0.18s ease; }
+    @keyframes fade { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
+
+    .section-title {
+      display: flex; align-items: baseline; gap: 0.6rem;
+      font-size: 1.2rem; font-weight: 700; letter-spacing: -0.02em;
+      margin: 0 0 0.2rem;
+    }
+    .section-sub { color: var(--muted); font-size: 0.88rem; margin: 0 0 1.1rem; }
+    .block { margin-bottom: 1.75rem; }
+    .block-toggle {
+      display: flex;
+      align-items: center;
+      gap: 0.45rem;
+      width: 100%;
+      margin: 0 0 0.85rem;
+      padding: 0.35rem 0.2rem;
+      border: none;
+      background: transparent;
+      color: var(--muted);
+      font: inherit;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      font-weight: 700;
+      cursor: pointer;
+      text-align: left;
+      transition: color 0.12s;
+    }
+    .block-toggle:hover { color: var(--text); }
+    .block-toggle .chev {
+      font-size: 0.6rem;
+      color: var(--accent);
+      transition: transform 0.15s ease;
+    }
+    .block.collapsed .block-toggle .chev { transform: rotate(-90deg); }
+    .block.collapsed .block-body { display: none; }
+    .block-head { display: none; }
+
+    /* Today tiles */
+    .tiles { display: grid; gap: 1rem; grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr)); }
+    .tile {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem 1.1rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.28);
+    }
+    .tile-top { display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; }
+    .tile-name { font-weight: 700; font-size: 0.98rem; }
+    .status-badge {
+      display: inline-flex; align-items: center; gap: 0.35rem;
+      font-size: 0.72rem; font-weight: 700;
+      padding: 0.18rem 0.5rem; border-radius: 999px;
+      border: 1px solid var(--border-strong);
+    }
+    .status-badge.ok { color: var(--ok); border-color: rgba(74, 222, 128, 0.4); }
+    .status-badge.warn { color: var(--warn); border-color: rgba(251, 191, 36, 0.4); }
+    .status-badge.running { color: var(--accent); border-color: rgba(96, 165, 250, 0.45); }
+    .status-badge .glyph { font-size: 0.85rem; }
+    .tile-meta { color: var(--muted); font-size: 0.8rem; margin: 0.55rem 0 0.9rem; }
+    .tile-meta .path { font-family: ui-monospace, monospace; font-size: 0.72rem; word-break: break-all; }
+    .tile-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+
+    /* Recent reports */
+    .reports-grid { display: grid; gap: 0.85rem; grid-template-columns: repeat(auto-fill, minmax(16rem, 1fr)); }
+    .report-card {
+      text-align: left;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 0.85rem 0.95rem;
+      cursor: pointer;
+      transition: border-color 0.12s, transform 0.12s;
+      color: var(--text);
+    }
+    .report-card:hover { border-color: var(--accent); transform: translateY(-1px); }
+    .report-card .rc-group {
+      font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.06em;
+      color: var(--accent); font-weight: 700;
+    }
+    .report-card .rc-title { font-weight: 600; margin: 0.25rem 0; font-size: 0.95rem; }
+    .report-card .rc-date { color: var(--muted); font-size: 0.8rem; }
+    .fmt-row { margin-top: 0.6rem; display: flex; gap: 0.3rem; }
+    .fmt { font-size: 0.62rem; font-weight: 700; text-transform: uppercase;
+           padding: 0.1rem 0.35rem; border-radius: 4px; background: var(--surface3); color: var(--muted); }
+
+    /* ---- Buttons -------------------------------------------------------- */
+    button.btn {
+      font: inherit; cursor: pointer;
+      border-radius: 8px; padding: 0.5rem 0.9rem;
+      font-size: 0.86rem; font-weight: 600;
+      border: 1px solid var(--border-strong);
+      background: var(--surface2); color: var(--text);
+      transition: border-color 0.12s, background 0.12s, filter 0.12s;
+    }
+    button.btn:hover:not(:disabled) { border-color: var(--accent); }
+    button.btn.primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-strong));
+      color: #04121b; border: none; font-weight: 700;
+      box-shadow: 0 2px 12px rgba(56, 189, 248, 0.3);
+    }
+    button.btn.primary:hover:not(:disabled) { filter: brightness(1.08); }
+    button.btn:disabled { opacity: 0.45; cursor: not-allowed; box-shadow: none; }
+    button.btn.ghost { background: transparent; }
+    .back-btn {
+      display: inline-flex; align-items: center; gap: 0.4rem;
+      background: transparent; border: none; color: var(--muted);
+      cursor: pointer; font-size: 0.85rem; font-weight: 600;
+      padding: 0.2rem 0; margin-bottom: 0.75rem;
+    }
+    .back-btn:hover { color: var(--text); }
+
+    /* ---- Run view ------------------------------------------------------- */
+    .run-grid { display: grid; gap: 1.25rem; grid-template-columns: 1fr; align-items: start; }
+    @media (min-width: 1000px) { .run-grid { grid-template-columns: minmax(0, 22rem) minmax(0, 1fr); } }
+    .panel {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.2rem 1.3rem;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.28);
+    }
+    .panel h3 { margin: 0 0 0.2rem; font-size: 1.05rem; }
+    .panel .desc { color: var(--muted); font-size: 0.85rem; margin: 0 0 1.1rem; }
+
+    label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 0.3rem; color: var(--muted); }
+    .field { margin-bottom: 0.9rem; }
+    .field .hint { font-size: 0.72rem; color: var(--muted); margin-top: 0.2rem; }
+    input[type="text"], input[type="date"], input[type="number"],
+    input[type="password"], input[type="search"], select {
+      width: 100%;
+      padding: 0.5rem 0.6rem;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      font-size: 0.92rem;
+      background: var(--surface2);
+      color: var(--text);
+    }
+    input[aria-invalid="true"] { border-color: var(--fail); }
+    .field-error { color: var(--fail); font-size: 0.75rem; margin-top: 0.25rem; }
+    .checkbox-field { display: flex; align-items: center; gap: 0.55rem; }
+    .checkbox-field input { width: auto; }
+    .checkbox-field label { margin: 0; color: var(--text); font-weight: 500; }
+    .info-field {
+      margin-bottom: 0.9rem;
+      padding: 0.65rem 0.75rem;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: var(--surface2);
+    }
+    .info-field .info-label {
+      display: block;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      color: var(--muted);
+      margin-bottom: 0.35rem;
+    }
+    .info-field .info-value { font-size: 0.88rem; line-height: 1.45; word-break: break-word; }
+    .product-scope {
+      margin-bottom: 1rem;
+      padding: 0.75rem 0.85rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-strong);
+      background: var(--surface2);
+    }
+    .product-scope h4 {
+      margin: 0 0 0.55rem;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--muted);
+    }
+    .product-scope .main-line { font-size: 0.88rem; margin: 0 0 0.55rem; }
+    .product-scope-list {
+      margin: 0 0 0.5rem;
+      padding-left: 1.1rem;
+      font-size: 0.85rem;
+      line-height: 1.5;
+    }
+    .product-scope-list li { margin: 0.15rem 0; }
+    .product-chips { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .product-chip {
+      font-size: 0.78rem;
+      font-family: ui-monospace, Consolas, monospace;
+      padding: 0.2rem 0.45rem;
+      border-radius: 6px;
+      border: 1px solid var(--border);
+      background: var(--surface3);
+      color: var(--text);
+    }
+    .tile-products {
+      margin-top: 0.35rem;
+      font-size: 0.75rem;
+      color: var(--muted);
+      font-family: ui-monospace, Consolas, monospace;
+    }
+    #staleServerBanner {
+      display: block;
+      margin: 0;
+      padding: 0.55rem 1rem;
+      background: rgba(248, 113, 113, 0.15);
+      border-bottom: 1px solid rgba(248, 113, 113, 0.35);
+      color: #fecaca;
+      font-size: 0.85rem;
+      text-align: center;
+    }
+    #staleServerBanner[hidden] { display: none; }
+    #tokenRow { display: none; }
+    #tokenRow.show { display: block; }
+    .req { color: var(--accent); }
+
+    /* Output / progress */
+    .status-line {
+      display: flex; align-items: center; gap: 0.6rem;
+      font-size: 0.9rem; margin-bottom: 0.75rem; min-height: 1.4rem;
+    }
+    .status-line.ok { color: var(--ok); }
+    .status-line.fail { color: var(--fail); }
+    .spinner {
+      width: 1rem; height: 1rem; flex: none;
+      border: 2px solid var(--border-strong);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .progress { height: 4px; border-radius: 4px; background: var(--surface3); overflow: hidden; margin-bottom: 1rem; display: none; }
+    .progress.show { display: block; }
+    .progress > i { display: block; height: 100%; width: 35%; border-radius: 4px;
+      background: linear-gradient(90deg, transparent, var(--accent), transparent);
+      animation: slide 1.1s ease-in-out infinite; }
+    @keyframes slide { 0% { margin-left: -35%; } 100% { margin-left: 100%; } }
+
+    .world-tabs, .segment-tabs {
+      display: flex; flex-wrap: wrap; gap: 0.35rem;
+      margin-bottom: 0.85rem;
+    }
+    .world-tabs { border-bottom: 1px solid var(--border-strong); padding-bottom: 0.55rem; }
+    .segment-tabs { margin-top: -0.15rem; }
+    .world-tab, .segment-tab {
+      border: 1px solid var(--border);
+      background: var(--surface2);
+      color: var(--muted);
+      border-radius: 999px;
+      padding: 0.35rem 0.85rem;
+      font-size: 0.82rem;
+      cursor: pointer;
+      transition: color 0.12s, border-color 0.12s, background 0.12s;
+    }
+    .world-tab:hover, .segment-tab:hover { color: var(--text); border-color: var(--border-strong); }
+    .world-tab.active {
+      color: var(--text);
+      border-color: var(--accent);
+      background: var(--accent-dim);
+    }
+    .segment-tab.active {
+      color: var(--text);
+      border-color: var(--accent-strong);
+      background: var(--surface3);
+    }
+    .tabs { display: flex; gap: 0.3rem; border-bottom: 1px solid var(--border); margin-bottom: 0.9rem; }
+    .tab {
+      background: transparent; border: none; cursor: pointer;
+      color: var(--muted); font: inherit; font-size: 0.85rem; font-weight: 600;
+      padding: 0.5rem 0.75rem; border-bottom: 2px solid transparent; margin-bottom: -1px;
+    }
+    .tab:hover { color: var(--text); }
+    .tab.active { color: var(--text); border-bottom-color: var(--accent); }
+    .tab[hidden] { display: none; }
+    .tabpane { display: none; }
+    .tabpane.active { display: block; }
+
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; margin-bottom: 0.6rem; }
+    .toolbar .grow { flex: 1; }
+    .artifact-switcher { display: flex; flex-wrap: wrap; gap: 0.35rem; }
+    .artifact-switcher .artifact-btn.active {
+      border-color: var(--accent);
+      background: var(--accent-dim);
+      color: var(--text);
+    }
+    .frame-wrap { border: 1px solid var(--border); border-radius: 10px; overflow: auto; background: #000; }
+    iframe.viewer {
+      width: 100%;
+      height: max(72vh, calc(100vh - var(--topbar-h) - 8.5rem));
+      min-height: 34rem;
+      border: none;
+      display: block;
+    }
+    #reportView {
+      min-height: calc(100vh - var(--topbar-h) - 3rem);
+      display: flex;
+      flex-direction: column;
+    }
+    #reportView[hidden] { display: none; }
+    #reportView .frame-wrap { flex: 1; min-height: 0; }
+    #reportView iframe.viewer {
+      height: calc(100vh - var(--topbar-h) - 7.5rem);
+      min-height: 36rem;
+    }
+    pre {
+      white-space: pre-wrap; word-break: break-word;
+      background: var(--surface2); border: 1px solid var(--border);
+      border-radius: 8px; padding: 1rem; font-size: 0.78rem;
+      max-height: 32rem; overflow: auto; color: #d4d4d8; margin: 0;
+    }
+    .placeholder { color: var(--muted); font-size: 0.9rem; }
+    .empty-state {
+      border: 1px dashed var(--border-strong); border-radius: var(--radius);
+      padding: 2rem 1.5rem; text-align: center; color: var(--muted);
+    }
+    .empty-state .big { font-size: 1.6rem; margin-bottom: 0.4rem; }
+
+    @media (max-width: 760px) {
+      .shell { grid-template-columns: 1fr; }
+      .sidebar { position: static; height: auto; border-right: none; border-bottom: 1px solid var(--border); }
+      .last-run { display: none; }
+    }
+    .sr-only {
+      position: absolute;
+      width: 1px; height: 1px;
+      padding: 0; margin: -1px;
+      overflow: hidden;
+      clip: rect(0, 0, 0, 0);
+      white-space: nowrap;
+      border: 0;
+    }
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+    }
+  </style>
+</head>
+<body>
+  <a class="skip-link" href="#workArea">Skip to content</a>
+
+  <header class="topbar" role="banner">
+    <button type="button" class="sidebar-toggle" id="sidebarToggle"
+            aria-controls="sidebar" aria-expanded="true"
+            title="Show menu">
+      <span class="toggle-glyph label-collapsed" aria-hidden="true">☰</span>
+      <span class="label-collapsed">Menu</span>
+      <span class="sr-only">Show sidebar</span>
+    </button>
+    <div class="brand">
+      <div class="brand-logo-wrap">
+        <img class="brand-logo" src="data:image/png;base64,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" alt="Kendago" />
+      </div>
+      <div>
+        <h1>Run Desk</h1>
+        <p class="brand-sub">Cockpit — unified analytics desk</p>
+      </div>
+    </div>
+    <div class="search">
+      <input id="search" type="search" placeholder="Search analyses…  (press /)"
+             aria-label="Search analyses" autocomplete="off" />
+    </div>
+    <button type="button" class="server-action" id="runServerPy"
+            title="Trigger start_run_desk.ps1 and open Run Desk on a fresh port">
+      <span aria-hidden="true">▶</span> Start Run Desk
+    </button>
+    <div id="lastRun" class="last-run" aria-live="polite"></div>
+  </header>
+  <div id="staleServerBanner" role="alert" hidden></div>
+
+  <div class="shell" id="shell">
+    <aside class="sidebar" id="sidebar" aria-label="Analysis catalog">
+      <div class="sidebar-head">
+        <span class="sidebar-head-title">Catalog</span>
+        <button type="button" class="sidebar-collapse" id="sidebarCollapse"
+                title="Collapse menu" aria-controls="sidebar" aria-expanded="true">
+          <span aria-hidden="true">◀</span> Collapse
+        </button>
+      </div>
+      <button class="nav-home active" id="navHome" type="button" aria-current="page">
+        <span aria-hidden="true">▦</span> Dashboard
+      </button>
+      <nav id="catalog" aria-label="Analyses">
+        <p class="empty-hint">Loading catalog…</p>
+      </nav>
+    </aside>
+
+    <main class="work" id="workArea" tabindex="-1" role="main">
+      <!-- Dashboard view -->
+      <section id="dashboardView" class="view" aria-labelledby="dashTitle">
+        <h2 class="section-title" id="dashTitle">Dashboard</h2>
+        <p class="section-sub" id="dashDate"></p>
+
+        <div class="world-tabs" id="worldTabs" role="tablist" aria-label="World"></div>
+        <div class="segment-tabs" id="segmentTabs" role="tablist" aria-label="Segment" hidden></div>
+
+        <div id="dashboardSections">
+          <p class="empty-hint">Loading…</p>
+        </div>
+
+        <div class="block" id="recentReportsBlock">
+          <button type="button" class="block-toggle" id="recentReportsToggle" aria-expanded="true"
+                  aria-controls="recentReports">
+            <span class="chev" aria-hidden="true">▼</span>
+            <span>Recent reports</span>
+          </button>
+          <div class="block-body reports-grid" id="recentReports">
+            <p class="empty-hint">Loading…</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Run view -->
+      <section id="runView" class="view" aria-labelledby="runTitle" hidden>
+        <button class="back-btn" id="backFromRun" type="button">← Dashboard</button>
+        <div class="run-grid">
+          <div class="panel" id="runPanel"></div>
+          <div class="panel" id="outputPanel">
+            <div class="status-line" id="status" role="status" aria-live="polite"></div>
+            <div class="progress" id="progress"><i></i></div>
+            <div class="tabs" role="tablist">
+              <button class="tab active" id="tabReport" role="tab" aria-selected="true"
+                      aria-controls="paneReport" type="button">Report</button>
+              <button class="tab" id="tabLogs" role="tab" aria-selected="false"
+                      aria-controls="paneLogs" type="button">Logs</button>
+            </div>
+            <div class="tabpane active" id="paneReport" role="tabpanel" aria-labelledby="tabReport">
+              <div id="reportSlot">
+                <div class="empty-state">
+                  <div class="big" aria-hidden="true">▶</div>
+                  Run the analysis to see its report here.
+                </div>
+              </div>
+            </div>
+            <div class="tabpane" id="paneLogs" role="tabpanel" aria-labelledby="tabLogs">
+              <pre id="out">No run yet.</pre>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Report viewer -->
+      <section id="reportView" class="view" aria-labelledby="reportTitle" hidden>
+        <button class="back-btn" id="backFromReport" type="button">← Dashboard</button>
+        <div class="toolbar">
+          <h2 class="section-title" id="reportTitle" style="margin:0;">Report</h2>
+          <span class="grow"></span>
+          <span id="fmtToggle" role="group" aria-label="Report format"></span>
+          <a id="reportOpen" class="btn" href="#" target="_blank" rel="noopener">Open full report ↗</a>
+        </div>
+        <div class="frame-wrap"><iframe id="reportFrame" class="viewer" title="Report"></iframe></div>
+      </section>
+    </main>
+  </div>
+
+  <script>
+    (function () {
+      "use strict";
+      var state = {
+        analyses: [], projects: [], reports: [], sections: [], selected: null,
+        timer: null, runHistory: {}, activeRuns: {},
+        activeWorld: "all", activeSegment: null, registryVersion: 0
+      };
+      var today = new Date().toISOString().slice(0, 10);
+
+      var WORLD_KEY = "runDesk.activeWorld";
+      var SEGMENT_KEY_PREFIX = "runDesk.activeSegment.";
+
+      function analysisKey(a) {
+        return (a.project_id || "") + ":" + (a.id || "");
+      }
+
+      function jobKey(job) {
+        return (job.project_id || "") + ":" + (job.id || "");
+      }
+
+      function loadWorld() {
+        try {
+          var w = localStorage.getItem(WORLD_KEY);
+          if (w) state.activeWorld = w;
+        } catch (e) {}
+      }
+
+      function saveWorld() {
+        try { localStorage.setItem(WORLD_KEY, state.activeWorld); } catch (e) {}
+      }
+
+      function loadSegment(worldId) {
+        try {
+          var s = localStorage.getItem(SEGMENT_KEY_PREFIX + worldId);
+          if (s) state.activeSegment = s;
+        } catch (e) {}
+      }
+
+      function saveSegment() {
+        if (state.activeWorld === "all") return;
+        try {
+          localStorage.setItem(SEGMENT_KEY_PREFIX + state.activeWorld, state.activeSegment || "");
+        } catch (e) {}
+      }
+
+      function currentProject() {
+        return (state.projects || []).filter(function (p) { return p.id === state.activeWorld; })[0] || null;
+      }
+
+      function segmentsForWorld(worldId) {
+        if (worldId === "all") return ["Overview"];
+        var proj = (state.projects || []).filter(function (p) { return p.id === worldId; })[0];
+        var segs = (proj && proj.dashboard_categories) ? proj.dashboard_categories.slice() : [];
+        segs.push("Reports");
+        return segs;
+      }
+
+      function analysesForWorld(worldId) {
+        if (worldId === "all") return [];
+        return state.analyses.filter(function (a) { return a.project_id === worldId; });
+      }
+
+      function filterAnalysesBySegment(list) {
+        if (!state.activeSegment || state.activeSegment === "Reports") return [];
+        return list.filter(function (a) { return a.category === state.activeSegment; });
+      }
+
+      var $ = function (id) { return document.getElementById(id); };
+      function escapeHtml(s) { var d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+      function el(tag, cls, html) { var e = document.createElement(tag); if (cls) e.className = cls; if (html != null) e.innerHTML = html; return e; }
+
+      var SIDEBAR_KEY = "runDesk.sidebarCollapsed";
+      var CAT_COLLAPSE_PREFIX = "runDesk.catCollapsed.";
+      var BLOCK_COLLAPSE_PREFIX = "runDesk.blockCollapsed.";
+      var DASHBOARD_CATEGORIES = [
+        "Daily monitors", "Retention rollups", "Geo reviews", "Report / PPT packs", "Funnel QA"
+      ];
+
+      function collapseKey(prefix, name) { return prefix + name.replace(/\W+/g, "_"); }
+      function defaultSectionCollapsed(name) {
+        return name !== "Daily monitors";
+      }
+      function isSectionCollapsed(prefix, name) {
+        try {
+          var stored = localStorage.getItem(collapseKey(prefix, name));
+          if (stored === null) return defaultSectionCollapsed(name);
+          return stored === "1";
+        } catch (e) { return defaultSectionCollapsed(name); }
+      }
+      function setSectionCollapsed(prefix, name, collapsed) {
+        try { localStorage.setItem(collapseKey(prefix, name), collapsed ? "1" : "0"); } catch (e) {}
+      }
+
+      function wireSectionToggle(btn, wrap, prefix, name) {
+        var collapsed = isSectionCollapsed(prefix, name);
+        wrap.classList.toggle("collapsed", collapsed);
+        btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        btn.addEventListener("click", function () {
+          collapsed = !wrap.classList.contains("collapsed");
+          wrap.classList.toggle("collapsed", collapsed);
+          btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+          setSectionCollapsed(prefix, name, collapsed);
+        });
+      }
+
+      function setSidebarCollapsed(collapsed) {
+        var shell = $("shell");
+        var btn = $("sidebarToggle");
+        var collapseBtn = $("sidebarCollapse");
+        var sidebar = $("sidebar");
+        shell.classList.toggle("collapsed", collapsed);
+        btn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        btn.title = collapsed ? "Show menu" : "Hide menu";
+        if (collapseBtn) {
+          collapseBtn.setAttribute("aria-expanded", collapsed ? "false" : "true");
+        }
+        sidebar.setAttribute("aria-hidden", collapsed ? "true" : "false");
+        try { localStorage.setItem(SIDEBAR_KEY, collapsed ? "1" : "0"); } catch (e) {}
+      }
+
+      function toggleSidebar() {
+        setSidebarCollapsed(!$("shell").classList.contains("collapsed"));
+      }
+
+      (function initSidebar() {
+        var collapsed = false;
+        try { collapsed = localStorage.getItem(SIDEBAR_KEY) === "1"; } catch (e) {}
+        setSidebarCollapsed(collapsed);
+        $("sidebarToggle").addEventListener("click", toggleSidebar);
+        $("sidebarCollapse").addEventListener("click", toggleSidebar);
+      })();
+
+      var views = { dashboard: $("dashboardView"), run: $("runView"), report: $("reportView") };
+      function showView(name) {
+        Object.keys(views).forEach(function (k) { views[k].hidden = (k !== name); });
+        $("navHome").classList.toggle("active", name === "dashboard");
+        $("navHome").setAttribute("aria-current", name === "dashboard" ? "page" : "false");
+        if (name !== "run") {
+          Array.prototype.forEach.call(document.querySelectorAll(".analysis-btn"), function (b) {
+            b.classList.remove("active"); b.setAttribute("aria-pressed", "false");
+          });
+        }
+        $("workArea").focus();
+      }
+
+      // ---- Load --------------------------------------------------------- #
+      $("dashDate").textContent = new Date().toLocaleDateString(undefined,
+        { weekday: "long", year: "numeric", month: "long", day: "numeric" });
+
+      loadWorld();
+
+      Promise.all([
+        fetch("/api/analyses").then(function (r) { return r.json(); }),
+        fetch("/api/dashboard?project=all").then(function (r) {
+          if (!r.ok) throw new Error("dashboard unavailable");
+          return r.json();
+        }).catch(function () {
+          return fetch("/api/reports?project=all").then(function (r) { return r.json(); }).then(function (rep) {
+            return { sections: [], reports: (rep && rep.reports) || [] };
+          }).catch(function () { return { sections: [], reports: [] }; });
+        })
+      ]).then(function (res) {
+        var reg = res[0] || {};
+        state.analyses = reg.analyses || [];
+        state.projects = reg.projects || [];
+        state.registryVersion = reg.registry_version || 0;
+        showStaleServerBanner(reg);
+        var dash = res[1] || {};
+        state.sections = dash.sections || [];
+        state.reports = dash.reports || [];
+        if (!state.projects.length) {
+          state.projects = [{ id: "svelte-retention", label: "Svelte retention", dashboard_categories: DASHBOARD_CATEGORIES }];
+        }
+        if (state.activeWorld !== "all" && !state.projects.some(function (p) { return p.id === state.activeWorld; })) {
+          state.activeWorld = state.projects[0] ? state.projects[0].id : "all";
+        }
+        loadSegment(state.activeWorld);
+        var segs = segmentsForWorld(state.activeWorld);
+        if (!state.activeSegment || segs.indexOf(state.activeSegment) === -1) {
+          state.activeSegment = segs[0] || "Overview";
+        }
+        refreshDashboardForWorld();
+        renderWorldTabs();
+        renderSegmentTabs();
+        renderCatalog("");
+        renderDashboard();
+      }).catch(function (err) {
+        $("catalog").innerHTML = '<p class="empty-hint" style="color:var(--fail)">Couldn\'t load the job catalog. Restart the runner and refresh.</p>';
+      });
+
+      function refreshDashboardForWorld() {
+        var q = state.activeWorld === "all" ? "all" : state.activeWorld;
+        return fetch("/api/dashboard?project=" + encodeURIComponent(q)).then(function (r) {
+          if (!r.ok) throw new Error("dashboard unavailable");
+          return r.json();
+        }).then(function (dash) {
+          state.sections = dash.sections || [];
+          state.reports = dash.reports || [];
+          if (!state.sections.length && state.analyses.length) {
+            state.sections = buildSectionsFallback();
+          }
+        }).catch(function () {});
+      }
+
+      function showStaleServerBanner(reg) {
+        var bar = $("staleServerBanner");
+        if (!bar) return;
+        var stale = (reg.registry_version || 0) < 1 || reg.project_id !== "cockpit";
+        bar.hidden = !stale;
+        if (stale) {
+          bar.textContent = "Run Desk server is outdated. Close other Run Desk windows, run start_run_desk.ps1 from Cockpit, then hard-refresh (Ctrl+F5).";
+        }
+      }
+
+      function renderWorldTabs() {
+        var host = $("worldTabs");
+        if (!host) return;
+        host.innerHTML = "";
+        (state.projects || []).forEach(function (p) {
+          var btn = el("button", "world-tab" + (state.activeWorld === p.id ? " active" : ""));
+          btn.type = "button";
+          btn.setAttribute("role", "tab");
+          btn.setAttribute("aria-selected", state.activeWorld === p.id ? "true" : "false");
+          btn.textContent = p.short_label || p.label;
+          btn.addEventListener("click", function () { setActiveWorld(p.id); });
+          host.appendChild(btn);
+        });
+        var allBtn = el("button", "world-tab" + (state.activeWorld === "all" ? " active" : ""));
+        allBtn.type = "button";
+        allBtn.setAttribute("role", "tab");
+        allBtn.setAttribute("aria-selected", state.activeWorld === "all" ? "true" : "false");
+        allBtn.textContent = "All";
+        allBtn.addEventListener("click", function () { setActiveWorld("all"); });
+        host.appendChild(allBtn);
+      }
+
+      function renderSegmentTabs() {
+        var wrap = $("segmentTabs");
+        if (!wrap) return;
+        if (state.activeWorld === "all") {
+          wrap.hidden = true;
+          wrap.innerHTML = "";
+          return;
+        }
+        wrap.hidden = false;
+        wrap.innerHTML = "";
+        segmentsForWorld(state.activeWorld).forEach(function (seg) {
+          var btn = el("button", "segment-tab" + (state.activeSegment === seg ? " active" : ""));
+          btn.type = "button";
+          btn.setAttribute("role", "tab");
+          btn.setAttribute("aria-selected", state.activeSegment === seg ? "true" : "false");
+          btn.textContent = seg;
+          btn.addEventListener("click", function () { setActiveSegment(seg); });
+          wrap.appendChild(btn);
+        });
+      }
+
+      function setActiveWorld(worldId) {
+        state.activeWorld = worldId;
+        saveWorld();
+        loadSegment(worldId);
+        var segs = segmentsForWorld(worldId);
+        if (!state.activeSegment || segs.indexOf(state.activeSegment) === -1) {
+          state.activeSegment = segs[0] || "Overview";
+        }
+        renderWorldTabs();
+        renderSegmentTabs();
+        refreshDashboardForWorld().then(function () {
+          renderCatalog($("search").value || "");
+          renderDashboard();
+        });
+      }
+
+      function setActiveSegment(seg) {
+        state.activeSegment = seg;
+        saveSegment();
+        renderSegmentTabs();
+        renderCatalog($("search").value || "");
+        renderDashboard();
+      }
+
+      // ---- Catalog ------------------------------------------------------ #
+      function buildSectionsFallback() {
+        var cats = state.activeWorld === "all"
+          ? DASHBOARD_CATEGORIES
+          : segmentsForWorld(state.activeWorld).filter(function (s) { return s !== "Reports"; });
+        return cats.map(function (cat) {
+          var jobs = state.analyses.filter(function (a) {
+            if (state.activeWorld !== "all" && a.project_id !== state.activeWorld) return false;
+            return a.category === cat;
+          }).map(function (a) {
+            var group = (state.reports || []).filter(function (r) {
+              return a.report_group && r.group === a.report_group && r.project_id === a.project_id;
+            });
+            var latest = group[0];
+            var todays = group.filter(function (r) { return r.date === today; })[0];
+            return {
+              id: a.id, project_id: a.project_id, label: a.label, description: a.description || "",
+              artifact_kind: a.artifact_kind, report_group: a.report_group,
+              has_output: !!latest, ran_today: !!todays, last_date: (todays || latest || {}).date || null,
+              latest_report: todays || latest || null, output_path: null, output_note: null
+            };
+          });
+          return jobs.length ? { category: cat, jobs: jobs } : null;
+        }).filter(Boolean);
+      }
+
+      function renderCatalog(filter) {
+        var q = (filter || "").trim().toLowerCase();
+        var cat = $("catalog");
+        cat.innerHTML = "";
+        if (state.activeWorld === "all") {
+          cat.innerHTML = '<p class="empty-hint">Select a world tab to browse runnable jobs.</p>';
+          return;
+        }
+        var pool = analysesForWorld(state.activeWorld);
+        var byCat = {}, order = [];
+        pool.forEach(function (a) {
+          var hay = (a.label + " " + (a.description || "") + " " + a.category).toLowerCase();
+          if (q && hay.indexOf(q) === -1) return;
+          if (!byCat[a.category]) { byCat[a.category] = []; order.push(a.category); }
+          byCat[a.category].push(a);
+        });
+        if (!order.length) { cat.innerHTML = '<p class="empty-hint">No analyses match "' + escapeHtml(filter) + '".</p>'; return; }
+        order.forEach(function (c) {
+          var wrap = el("div", "cat");
+          var toggle = el("button", "cat-toggle");
+          toggle.type = "button";
+          toggle.innerHTML = '<span class="chev" aria-hidden="true">▼</span><span>' + escapeHtml(c) + "</span>";
+          toggle.setAttribute("aria-controls", "catbody_" + c.replace(/\W+/g, "_"));
+          wrap.appendChild(toggle);
+          var body = el("div", "cat-body");
+          body.id = "catbody_" + c.replace(/\W+/g, "_");
+          byCat[c].forEach(function (a) {
+            var btn = el("button", "analysis-btn");
+            btn.type = "button";
+            btn.dataset.id = a.id;
+            btn.dataset.project = a.project_id;
+            var akey = analysisKey(a);
+            btn.setAttribute("aria-pressed", state.selected && analysisKey(state.selected) === akey ? "true" : "false");
+            if (state.selected && analysisKey(state.selected) === akey) btn.classList.add("active");
+            var pill = a.artifact_kind ? '<span class="pill">' + escapeHtml(a.artifact_kind) + "</span>" : "";
+            btn.innerHTML = '<span class="btn-label">' + escapeHtml(a.label) + pill + "</span>";
+            btn.addEventListener("click", function () { selectAnalysis(a.project_id, a.id); });
+            body.appendChild(btn);
+          });
+          wrap.appendChild(body);
+          wireSectionToggle(toggle, wrap, CAT_COLLAPSE_PREFIX, c);
+          cat.appendChild(wrap);
+        });
+        updateRunningIndicators();
+      }
+
+      (function initRecentToggle() {
+        var btn = $("recentReportsToggle");
+        var block = $("recentReportsBlock");
+        if (btn && block) wireSectionToggle(btn, block, BLOCK_COLLAPSE_PREFIX, "Recent reports");
+      })();
+
+      $("search").addEventListener("input", function (e) { renderCatalog(e.target.value); });
+      document.addEventListener("keydown", function (e) {
+        if (e.key === "/" && document.activeElement !== $("search") && !/^(INPUT|TEXTAREA|SELECT)$/.test(document.activeElement.tagName)) {
+          e.preventDefault(); $("search").focus();
+        }
+      });
+      $("navHome").addEventListener("click", function () { showView("dashboard"); });
+      $("backFromRun").addEventListener("click", function () { showView("dashboard"); });
+      $("backFromReport").addEventListener("click", function () { showView("dashboard"); });
+      $("runServerPy").addEventListener("click", runServerPy);
+
+      function authHeaders() {
+        var headers = { "Content-Type": "application/json" };
+        var token = "";
+        var tokenInput = $("p_token");
+        if (tokenInput && tokenInput.value) token = tokenInput.value;
+        if (token) headers["Authorization"] = "Bearer " + token;
+        return headers;
+      }
+
+      function runServerPy() {
+        var btn = $("runServerPy");
+        btn.disabled = true;
+        btn.innerHTML = '<span aria-hidden="true">⏳</span> Starting…';
+        fetch("/api/server/run", { method: "POST", headers: authHeaders(), body: "{}" })
+          .then(function (r) { return r.text().then(function (t) {
+            var j; try { j = JSON.parse(t); } catch (e) { j = { error: t || "Non-JSON response" }; }
+            return { r: r, j: j };
+          }); })
+          .then(function (ref) {
+            if (ref.r.status === 401) {
+              var token = window.prompt("Runner token required:");
+              if (!token) throw new Error("Runner token required.");
+              return fetch("/api/server/run", {
+                method: "POST",
+                headers: { "Content-Type": "application/json", "Authorization": "Bearer " + token },
+                body: "{}"
+              }).then(function (r2) { return r2.json().then(function (j2) { return { r: r2, j: j2 }; }); });
+            }
+            return ref;
+          })
+          .then(function (ref) {
+            if (!ref.j || !ref.j.ok) throw new Error((ref.j && ref.j.error) || "Couldn't start Run Desk");
+            $("lastRun").innerHTML = 'Started · <b>start_run_desk.ps1</b>' +
+              (ref.j.port ? ' · port ' + escapeHtml(ref.j.port) : '') +
+              ' <span class="dot" aria-hidden="true">●</span>';
+            if (ref.j.url) window.location.href = ref.j.url;
+          })
+          .catch(function (err) {
+            $("lastRun").innerHTML = 'Server start failed · <b>' + escapeHtml(String(err.message || err)) + '</b>' +
+              ' <span class="dot fail" aria-hidden="true">●</span>';
+          })
+          .finally(function () {
+            btn.disabled = false;
+            btn.innerHTML = '<span aria-hidden="true">▶</span> Start Run Desk';
+          });
+      }
+
+      // ---- Dashboard ---------------------------------------------------- #
+      function buildJobTile(job) {
+        var tile = el("div", "tile");
+        var badge;
+        if (state.activeRuns[jobKey(job)]) {
+          badge = '<span class="status-badge running"><span class="glyph" aria-hidden="true">●</span> Running…</span>';
+        } else if (job.ran_today) {
+          badge = '<span class="status-badge ok"><span class="glyph" aria-hidden="true">●</span> Ran today</span>';
+        } else if (job.has_output) {
+          badge = '<span class="status-badge ok"><span class="glyph" aria-hidden="true">●</span> Has output</span>';
+        } else {
+          badge = '<span class="status-badge warn"><span class="glyph" aria-hidden="true">●</span> Not run today</span>';
+        }
+        var meta;
+        if (job.ran_today && job.last_date) {
+          meta = "Output ready for " + escapeHtml(job.last_date);
+        } else if (job.last_date) {
+          meta = "Last output: " + escapeHtml(job.last_date);
+        } else if (job.output_path) {
+          meta = "Latest file on disk";
+        } else if (job.output_note) {
+          meta = escapeHtml(job.output_note);
+        } else {
+          meta = "No output yet";
+        }
+        if (job.description) {
+          meta += '<br><span style="opacity:0.85">' + escapeHtml(job.description) + "</span>";
+        }
+        if (job.output_path) {
+          meta += '<br><span class="path">' + escapeHtml(job.output_path) + "</span>";
+        }
+        tile.innerHTML =
+          '<div class="tile-top"><span class="tile-name">' + escapeHtml(job.label) + "</span>" + badge + "</div>" +
+          '<p class="tile-meta">' + meta + "</p>";
+        var actions = el("div", "tile-actions");
+        var runBtn = el("button", "btn primary", "Run now");
+        runBtn.type = "button";
+        runBtn.addEventListener("click", function () { selectAnalysis(job.project_id, job.id); });
+        actions.appendChild(runBtn);
+        if (job.latest_report) {
+          var vBtn = el("button", "btn", "View report");
+          vBtn.type = "button";
+          vBtn.addEventListener("click", function () { openReport(job.latest_report); });
+          actions.appendChild(vBtn);
+        }
+        tile.appendChild(actions);
+        return tile;
+      }
+
+      function renderDashboard() {
+        var container = $("dashboardSections");
+        container.innerHTML = "";
+        var showReportsOnly = state.activeSegment === "Reports";
+        var sections = state.sections.slice();
+        if (state.activeWorld !== "all") {
+          sections = sections.filter(function (s) { return s.project_id === state.activeWorld; });
+          if (!showReportsOnly && state.activeSegment) {
+            sections = sections.filter(function (s) { return s.category === state.activeSegment; });
+          }
+        }
+        if (!showReportsOnly) {
+          if (!sections.length) {
+            container.innerHTML = state.activeWorld === "all"
+              ? '<p class="empty-hint">Cross-world overview — see recent reports below.</p>'
+              : '<p class="empty-hint">No jobs in this segment.</p>';
+          } else {
+            sections.forEach(function (section) {
+              var block = el("div", "block");
+              var secId = "sec_" + (section.project_id || "") + section.category.replace(/\W+/g, "_");
+              block.setAttribute("aria-labelledby", secId);
+              var toggle = el("button", "block-toggle");
+              toggle.type = "button";
+              toggle.id = secId;
+              var title = section.category;
+              if (state.activeWorld === "all" && section.project_label) {
+                title = section.project_label + " · " + section.category;
+              }
+              toggle.innerHTML =
+                '<span class="chev" aria-hidden="true">▼</span><span>' + escapeHtml(title) + "</span>";
+              toggle.setAttribute("aria-controls", secId + "_body");
+              block.appendChild(toggle);
+              var body = el("div", "block-body tiles");
+              body.id = secId + "_body";
+              (section.jobs || []).forEach(function (job) {
+                body.appendChild(buildJobTile(job));
+              });
+              block.appendChild(body);
+              wireSectionToggle(toggle, block, BLOCK_COLLAPSE_PREFIX, secId);
+              container.appendChild(block);
+            });
+          }
+        } else {
+          container.innerHTML = '<p class="empty-hint">Reports archive for this world — pick a card below.</p>';
+        }
+
+        var rEl = $("recentReports");
+        rEl.innerHTML = "";
+        var repPool = state.reports.slice();
+        if (state.activeWorld !== "all") {
+          repPool = repPool.filter(function (r) { return r.project_id === state.activeWorld; });
+        }
+        if (!repPool.length) {
+          rEl.innerHTML = '<p class="empty-hint">No reports yet.</p>';
+          return;
+        }
+        repPool.slice(0, 12).forEach(function (r) {
+          var card = el("button", "report-card");
+          card.type = "button";
+          var fmts = r.formats.map(function (f) { return '<span class="fmt">' + escapeHtml(f.kind) + "</span>"; }).join("");
+          var badge = r.project_label ? '<div class="rc-group">' + escapeHtml(r.project_label) + "</div>" : "";
+          card.innerHTML =
+            badge +
+            '<div class="rc-group">' + escapeHtml(r.group.replace(/_/g, " ")) + "</div>" +
+            '<div class="rc-title">' + escapeHtml(r.title) + "</div>" +
+            '<div class="rc-date">' + escapeHtml(r.date || "undated") + "</div>" +
+            '<div class="fmt-row">' + fmts + "</div>";
+          card.addEventListener("click", function () { openReport(r); });
+          rEl.appendChild(card);
+        });
+      }
+
+      // ---- Report viewer ------------------------------------------------ #
+      function analysisForReportGroup(projectId, group) {
+        return state.analyses.find(function (a) {
+          return a.project_id === projectId && a.report_group === group &&
+            (a.secondary_artifacts || []).length;
+        });
+      }
+
+      function openReport(report) {
+        showView("report");
+        $("reportTitle").textContent = report.title + (report.date ? " · " + report.date : "");
+        var toggle = $("fmtToggle");
+        toggle.innerHTML = "";
+        var linked = analysisForReportGroup(report.project_id, report.group);
+        var studyArtifacts = (linked && linked.secondary_artifacts) ? linked.secondary_artifacts : [];
+        var viewFormats = report.formats.slice();
+        studyArtifacts.forEach(function (a) {
+          viewFormats.push({ kind: a.kind || "study", url: a.url, label: a.label });
+        });
+        function pickDisplayFormat(formats) {
+          if (!formats || !formats.length) return null;
+          var html = formats.filter(function (f) { return f.kind === "html"; })[0];
+          return html || formats[0];
+        }
+        function load(fmt) {
+          if (!fmt) return;
+          $("reportFrame").src = fmt.url;
+          $("reportOpen").href = fmt.url;
+          $("reportFrame").title = report.title + " (" + (fmt.label || fmt.kind) + ")";
+          Array.prototype.forEach.call(toggle.children, function (b) {
+            b.classList.toggle("primary", b.dataset.url === fmt.url);
+          });
+        }
+        viewFormats.forEach(function (f) {
+          var label = f.label ? f.label.toUpperCase() : f.kind.toUpperCase();
+          var b = el("button", "btn ghost", label);
+          b.type = "button"; b.dataset.url = f.url;
+          b.addEventListener("click", function () { load(f); });
+          toggle.appendChild(b);
+        });
+        load(pickDisplayFormat(viewFormats) || report.primary);
+      }
+
+      // ---- Run flow ----------------------------------------------------- #
+      function selectAnalysis(projectId, id) {
+        state.selected = state.analyses.filter(function (a) {
+          return a.id === id && a.project_id === projectId;
+        })[0];
+        if (!state.selected) return;
+        showView("run");
+        var akey = analysisKey(state.selected);
+        Array.prototype.forEach.call(document.querySelectorAll(".analysis-btn"), function (b) {
+          var on = b.dataset.id === id && b.dataset.project === projectId;
+          b.classList.toggle("active", on);
+          b.setAttribute("aria-pressed", on ? "true" : "false");
+        });
+        renderForm();
+        restoreOutput(akey);
+      }
+
+      function renderForm() {
+        var a = state.selected;
+        var html = "<h3>" + escapeHtml(a.label) + "</h3>";
+        if (a.description) html += '<p class="desc">' + escapeHtml(a.description) + "</p>";
+        html += '<form id="runForm" novalidate>';
+        (a.params || []).forEach(function (p) {
+          var fid = "p_" + p.name;
+          if (p.type === "info") {
+            html += '<div class="info-field"><span class="info-label">' + escapeHtml(p.label || p.name) +
+              '</span><div class="info-value">' + escapeHtml(p.value || "") + "</div></div>";
+            return;
+          }
+          if (p.type === "checkbox") {
+            html += '<div class="field checkbox-field"><input type="checkbox" id="' + fid + '" />' +
+              '<label for="' + fid + '">' + escapeHtml(p.label || p.name) + "</label></div>";
+            return;
+          }
+          var required = p.optional === false;
+          html += '<div class="field">';
+          html += '<label for="' + fid + '">' + escapeHtml(p.label || p.name) +
+            (required ? ' <span class="req" aria-hidden="true">*</span>' : "") + "</label>";
+          var def = p["default"] != null ? p["default"] : "";
+          var reqAttr = required ? ' aria-required="true"' : "";
+          if (p.type === "select") {
+            html += '<select id="' + fid + '"' + reqAttr + ">";
+            (p.choices || []).forEach(function (c) {
+              html += '<option value="' + escapeHtml(c) + '"' + (c === def ? " selected" : "") + ">" + escapeHtml(c) + "</option>";
+            });
+            html += "</select>";
+          } else if (p.type === "date") {
+            var dval = def || (p.name === "report-date" ? today : "");
+            html += '<input type="date" id="' + fid + '" value="' + escapeHtml(dval) + '"' + reqAttr + " />";
+          } else if (p.type === "int") {
+            html += '<input type="number" id="' + fid + '" value="' + escapeHtml(def) + '"' + reqAttr + " />";
+          } else {
+            html += '<input type="text" id="' + fid + '" value="' + escapeHtml(def) + '"' + reqAttr + " />";
+          }
+          html += '<div class="field-error" id="err_' + p.name + '" hidden></div>';
+          html += "</div>";
+        });
+        html += '<div class="field" id="tokenRow"><label for="p_token">Runner token</label>' +
+          '<input type="password" id="p_token" autocomplete="off" placeholder="Only if your team set ANALYSIS_WEB_TOKEN" />' +
+          '<div class="hint">Required when the server runs with an API token.</div></div>';
+        html += '<button type="submit" class="btn primary" id="runBtn">Run analysis</button>';
+        html += "</form>";
+        $("runPanel").innerHTML = html;
+        $("runForm").addEventListener("submit", onRun);
+      }
+
+      function resetOutput() {
+        $("status").textContent = "";
+        $("status").className = "status-line";
+        $("progress").classList.remove("show");
+        $("out").textContent = "No run yet.";
+        $("reportSlot").innerHTML =
+          '<div class="empty-state"><div class="big" aria-hidden="true">▶</div>' +
+          (state.selected && (state.selected.artifact_kind || (state.selected.secondary_artifact_labels || []).length)
+            ? "Run the analysis to see its report here" +
+              ((state.selected.secondary_artifact_labels || []).length
+                ? " (monitor + " + state.selected.secondary_artifact_labels.join(", ") + ")."
+                : ".")
+            : "This analysis writes its output to files (e.g. Accounts/). The path appears in the logs after a successful run.") +
+          "</div>";
+        switchTab("report");
+      }
+
+      function reportSlotEmpty(ok) {
+        return '<div class="empty-state"><div class="big" aria-hidden="true">📄</div>' +
+          (ok
+            ? "No inline report for this analysis — check the logs for the output path."
+            : "No report produced. See the logs for the error.") +
+          "</div>";
+      }
+
+      function reportSlotIframe(url) {
+        return reportSlotViewer([{ label: "Monitor", url: url }]);
+      }
+
+      function reportSlotViewer(artifacts) {
+        if (!artifacts || !artifacts.length) return reportSlotEmpty(true);
+        var buttons = artifacts.map(function (a, i) {
+          return '<button type="button" class="btn artifact-btn' + (i === 0 ? " active" : "") +
+            '" data-url="' + escapeHtml(a.url) + '">' + escapeHtml(a.label || "Report") + "</button>";
+        }).join("");
+        var primary = artifacts[0];
+        return '<div class="toolbar"><span class="artifact-switcher" role="group" aria-label="Report views">' +
+          buttons + '</span><span class="grow"></span>' +
+          '<a class="btn open-artifact-link" href="' + escapeHtml(primary.url) +
+          '" target="_blank" rel="noopener">Open ↗</a></div>' +
+          '<div class="frame-wrap"><iframe class="viewer artifact-frame" title="Generated report" src="' +
+          escapeHtml(primary.url) + '"></iframe></div>';
+      }
+
+      function bindArtifactSwitcher(slot) {
+        if (!slot) return;
+        slot.querySelectorAll(".artifact-btn").forEach(function (btn) {
+          btn.addEventListener("click", function () {
+            var url = btn.getAttribute("data-url");
+            if (!url) return;
+            slot.querySelectorAll(".artifact-btn").forEach(function (b) { b.classList.remove("active"); });
+            btn.classList.add("active");
+            var frame = slot.querySelector(".artifact-frame");
+            if (frame) frame.src = url;
+            var link = slot.querySelector(".open-artifact-link");
+            if (link) link.href = url;
+          });
+        });
+      }
+
+      function buildRunArtifacts(j) {
+        var artifacts = [];
+        if (j.artifact_url) {
+          artifacts.push({ label: "Monitor", url: j.artifact_url, kind: j.artifact_kind });
+        }
+        (j.secondary_artifacts || []).forEach(function (a) { artifacts.push(a); });
+        return artifacts;
+      }
+
+      function mountReportSlot(artifacts) {
+        if (!artifacts.length) {
+          $("reportSlot").innerHTML = reportSlotEmpty(true);
+          return;
+        }
+        $("reportSlot").innerHTML = reportSlotViewer(artifacts);
+        bindArtifactSwitcher($("reportSlot"));
+      }
+
+      function formatElapsed(ms) {
+        var s = Math.max(0, Math.floor(ms / 1000));
+        return Math.floor(s / 60) + "m " + (s % 60) + "s";
+      }
+
+      function markRunStarted(analysisId, label) {
+        state.activeRuns[analysisId] = { startedAt: Date.now(), label: label || analysisId };
+        updateRunningIndicators();
+        updateRunHeader();
+        ensureRunClock();
+      }
+
+      function markRunFinished(analysisId) {
+        delete state.activeRuns[analysisId];
+        updateRunningIndicators();
+        ensureRunClock();
+      }
+
+      function updateRunningIndicators() {
+        Array.prototype.forEach.call(document.querySelectorAll(".analysis-btn"), function (b) {
+          b.classList.toggle("running", !!state.activeRuns[b.dataset.project + ":" + b.dataset.id]);
+        });
+        if (!views.dashboard.hidden) renderDashboard();
+      }
+
+      function updateRunHeader() {
+        var ids = Object.keys(state.activeRuns);
+        if (!ids.length) return;
+        if (ids.length === 1) {
+          var active = state.activeRuns[ids[0]];
+          var mmss = formatElapsed(Date.now() - active.startedAt);
+          $("lastRun").innerHTML = "Running · <b>" + escapeHtml(active.label) + "</b> · " + mmss +
+            ' <span class="dot running" aria-hidden="true">●</span>';
+        } else {
+          $("lastRun").innerHTML = "Running · <b>" + ids.length + " jobs</b> in background" +
+            ' <span class="dot running" aria-hidden="true">●</span>';
+        }
+      }
+
+      function ensureRunClock() {
+        if (!Object.keys(state.activeRuns).length) {
+          clearTimer();
+          return;
+        }
+        if (state.timer) return;
+        state.timer = setInterval(function () {
+          if (!Object.keys(state.activeRuns).length) { clearTimer(); return; }
+          updateRunHeader();
+          var sel = state.selected && analysisKey(state.selected);
+          if (sel && state.activeRuns[sel]) {
+            var txt = $("statusText");
+            var mmss = formatElapsed(Date.now() - state.activeRuns[sel].startedAt);
+            if (txt) {
+              txt.textContent = "Running… " + mmss + " elapsed. You can switch reports — this job keeps running.";
+            }
+          }
+        }, 1000);
+      }
+
+      function restoreRunningOutput(analysisId) {
+        var active = state.activeRuns[analysisId];
+        if (!active) return;
+        $("status").className = "status-line";
+        $("status").innerHTML =
+          '<span class="spinner" aria-hidden="true"></span> ' +
+          '<span id="statusText">Running… ' + formatElapsed(Date.now() - active.startedAt) +
+          " elapsed. You can switch reports — this job keeps running.</span>";
+        $("progress").classList.add("show");
+        $("out").textContent =
+          "Job is still running on this machine. Logs and the report appear here when it finishes.";
+        $("reportSlot").innerHTML =
+          '<div class="empty-state"><div class="big" aria-hidden="true">⏳</div>Running… switch away and come back anytime.</div>';
+        var btn = $("runBtn");
+        if (btn) { btn.disabled = true; btn.textContent = "Running…"; }
+        ensureRunClock();
+        switchTab("report");
+      }
+
+      function restoreOutput(analysisId) {
+        if (state.activeRuns[analysisId]) {
+          restoreRunningOutput(analysisId);
+          return;
+        }
+        var run = state.runHistory[analysisId];
+        if (!run) {
+          resetOutput();
+          return;
+        }
+        $("progress").classList.remove("show");
+        $("status").className = "status-line " + (run.statusClass || "");
+        $("status").textContent = run.statusText || "";
+        $("out").textContent = run.logs || "(no console output)";
+        if (run.artifact_url || (run.artifacts && run.artifacts.length)) {
+          var restored = run.artifacts || buildRunArtifacts({ artifact_url: run.artifact_url, secondary_artifacts: run.secondary_artifacts });
+          $("reportSlot").innerHTML = reportSlotViewer(restored);
+          bindArtifactSwitcher($("reportSlot"));
+        } else {
+          $("reportSlot").innerHTML = run.reportHtml || reportSlotEmpty(run.ok);
+        }
+        switchTab(run.activeTab || (run.artifact_url || (run.artifacts && run.artifacts.length) ? "report" : "logs"));
+      }
+
+      function saveRunResult(analysisId, run) {
+        state.runHistory[analysisId] = run;
+      }
+
+      function clearTimer() { if (state.timer) { clearInterval(state.timer); state.timer = null; } }
+
+      function switchTab(which) {
+        var rep = which === "report";
+        $("tabReport").classList.toggle("active", rep);
+        $("tabReport").setAttribute("aria-selected", rep ? "true" : "false");
+        $("tabLogs").classList.toggle("active", !rep);
+        $("tabLogs").setAttribute("aria-selected", !rep ? "true" : "false");
+        $("paneReport").classList.toggle("active", rep);
+        $("paneLogs").classList.toggle("active", !rep);
+      }
+      $("tabReport").addEventListener("click", function () { switchTab("report"); });
+      $("tabLogs").addEventListener("click", function () { switchTab("logs"); });
+
+      function validate() {
+        var ok = true;
+        (state.selected.params || []).forEach(function (p) {
+          if (p.type === "info" || p.type === "checkbox" || p.optional !== false) return;
+          var elx = $("p_" + p.name), errEl = $("err_" + p.name);
+          var v = elx ? elx.value.trim() : "";
+          if (!v) {
+            ok = false;
+            elx.setAttribute("aria-invalid", "true");
+            errEl.textContent = (p.label || p.name) + " is required.";
+            errEl.hidden = false;
+          } else {
+            elx.removeAttribute("aria-invalid");
+            errEl.hidden = true;
+          }
+        });
+        return ok;
+      }
+
+      function collectParams() {
+        var params = {};
+        (state.selected.params || []).forEach(function (p) {
+          if (p.type === "info") return;
+          var elx = $("p_" + p.name);
+          if (!elx) return;
+          params[p.name] = p.type === "checkbox" ? elx.checked : elx.value;
+        });
+        return params;
+      }
+
+      function onRun(e) {
+        e.preventDefault();
+        if (!validate()) { switchTab("report"); $("status").textContent = "Please fix the highlighted fields."; $("status").className = "status-line fail"; return; }
+
+        var runKey = analysisKey(state.selected);
+        if (state.activeRuns[runKey]) {
+          $("status").className = "status-line";
+          $("status").textContent = "This job is already running — logs appear when it finishes.";
+          restoreRunningOutput(runKey);
+          return;
+        }
+
+        var btn = $("runBtn");
+        var token = $("p_token") ? $("p_token").value : "";
+        if (btn) { btn.disabled = true; btn.textContent = "Running…"; }
+
+        $("status").className = "status-line";
+        $("status").innerHTML = '<span class="spinner" aria-hidden="true"></span> <span id="statusText">Running on this machine… SQL jobs can take several minutes.</span>';
+        $("progress").classList.add("show");
+        $("out").textContent = "Waiting for the job to finish — you can switch to another report while this runs.";
+        $("reportSlot").innerHTML = '<div class="empty-state"><div class="big" aria-hidden="true">⏳</div>Running…</div>';
+
+        markRunStarted(runKey, state.selected.label);
+
+        var headers = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = "Bearer " + token;
+
+        fetch("/api/run", { method: "POST", headers: headers,
+          body: JSON.stringify({
+            id: state.selected.id,
+            project_id: state.selected.project_id,
+            params: collectParams()
+          }) })
+          .then(function (r) { return r.text().then(function (t) {
+            var j; try { j = JSON.parse(t); } catch (e2) { j = { error: t || "Non-JSON response" }; }
+            return { r: r, j: j };
+          }); })
+          .then(function (ref) { finishRun(ref.r, ref.j, runKey); })
+          .catch(function (err) {
+            markRunFinished(runKey);
+            var runBtn = $("runBtn");
+            if (runBtn) { runBtn.disabled = false; runBtn.textContent = "Run analysis"; }
+            $("progress").classList.remove("show");
+            $("status").className = "status-line fail";
+            $("status").textContent = "Couldn't reach the runner — is server.py still running?";
+            $("out").textContent = String(err);
+            if (state.selected && analysisKey(state.selected) === runKey) switchTab("logs");
+          });
+      }
+
+      function finishRun(r, j, runKey) {
+        var active = state.activeRuns[runKey];
+        markRunFinished(runKey);
+
+        runKey = runKey || (state.selected && analysisKey(state.selected));
+        var analysis = state.analyses.filter(function (a) { return analysisKey(a) === runKey; })[0];
+        var label = (analysis && analysis.label) || runKey || "Analysis";
+        var runBtn = (state.selected && analysisKey(state.selected) === runKey) ? $("runBtn") : null;
+        if (runBtn) {
+          runBtn.disabled = false;
+          runBtn.textContent = "Run analysis";
+        }
+        if (state.selected && analysisKey(state.selected) === runKey) {
+          $("progress").classList.remove("show");
+        }
+
+        if (j.error === "unauthorized" && r.status === 401) {
+          if (state.selected && analysisKey(state.selected) === runKey) {
+            $("tokenRow").classList.add("show");
+            $("status").className = "status-line fail";
+            $("status").textContent = "Authentication required — enter the runner token below and run again.";
+            var tk = $("p_token"); if (tk) tk.focus();
+          }
+          return;
+        }
+        if (j.exit_code === undefined && j.error) {
+          if (state.selected && analysisKey(state.selected) === runKey) {
+            $("status").className = "status-line fail";
+            $("status").textContent = "Couldn't run this job: " + j.error;
+          }
+          return;
+        }
+        var ok = j.exit_code === 0;
+        var startedAt = (active && active.startedAt) || Date.now();
+        var secs = Math.floor((Date.now() - startedAt) / 1000);
+        var statusText = ok
+          ? "Finished successfully in " + secs + "s."
+          : "Finished with errors (exit " + j.exit_code + ").";
+        var statusClass = ok ? "ok" : "fail";
+
+        updateLastRun(label, ok);
+
+        var parts = [];
+        if (j.stdout) parts.push("--- stdout ---\n" + j.stdout);
+        if (j.stderr) parts.push("--- stderr ---\n" + j.stderr);
+        var logs = parts.join("\n\n") || "(no console output)";
+
+        var activeTab = "logs";
+        var reportHtml = "";
+        var runArtifacts = buildRunArtifacts(j);
+        if (runKey && state.selected && analysisKey(state.selected) === runKey) {
+          $("status").className = "status-line " + statusClass;
+          $("status").textContent = statusText;
+          $("out").textContent = logs;
+          if (runArtifacts.length) {
+            mountReportSlot(runArtifacts);
+            activeTab = "report";
+            refreshReports();
+          } else {
+            reportHtml = reportSlotEmpty(ok);
+            $("reportSlot").innerHTML = reportHtml;
+          }
+          switchTab(runArtifacts.length ? "report" : "logs");
+        } else if (runArtifacts.length) {
+          activeTab = "report";
+          refreshReports();
+        } else {
+          reportHtml = reportSlotEmpty(ok);
+        }
+
+        if (runKey) {
+          saveRunResult(runKey, {
+            statusText: statusText,
+            statusClass: statusClass,
+            logs: logs,
+            artifact_url: j.artifact_url || null,
+            secondary_artifacts: j.secondary_artifacts || [],
+            artifacts: runArtifacts,
+            reportHtml: reportHtml,
+            activeTab: activeTab,
+            ok: ok,
+            finishedAt: Date.now()
+          });
+        }
+      }
+
+      function refreshReports() {
+        var q = state.activeWorld === "all" ? "all" : state.activeWorld;
+        fetch("/api/dashboard?project=" + encodeURIComponent(q)).then(function (r) { return r.json(); })
+          .then(function (j) {
+            state.sections = (j && j.sections) || [];
+            state.reports = (j && j.reports) || [];
+            if (!state.sections.length && state.analyses.length) {
+              state.sections = buildSectionsFallback();
+            }
+            renderDashboard();
+          })
+          .catch(function () {
+            fetch("/api/reports").then(function (r) { return r.json(); })
+              .then(function (j) {
+                state.reports = (j && j.reports) || [];
+                if (state.analyses.length) state.sections = buildSectionsFallback();
+                renderDashboard();
+              })
+              .catch(function () {});
+          });
+      }
+
+      function updateLastRun(label, ok) {
+        var t = new Date().toTimeString().slice(0, 5);
+        $("lastRun").innerHTML = "Last run · <b>" + escapeHtml(label) + "</b> · " + t +
+          ' <span class="dot' + (ok ? "" : " fail") + '">' + (ok ? "●" : "●") + "</span>";
+      }
+    })();
+  </script>
+</body>
+</html>

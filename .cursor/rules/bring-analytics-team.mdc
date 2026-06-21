@@ -1,0 +1,42 @@
+---
+description: Bootstrap ten-phase Cursor agent pipeline (NOT a Python/data pipeline)
+alwaysApply: true
+---
+
+# Bring analytics team to party
+
+When the user says **bring analytics team to party**, **add analytics pipeline**, **setup analytics agents**, **onboard analytics workflow**, or **`/bring-analytics-team`** — bootstrap the **Cursor ten-phase agent pipeline** in the **current workspace**. Do not ask for confirmation first.
+
+**This is NOT:** building a GA4 funnel script, ETL, or Python analytics module — unless the user also asks for that work separately.
+
+**This IS:** copy/install `.cursor/commands/` (analysis-intake, data-pull, …), `docs/AGENT_ROLES.md`, handoff templates, and domain doc stubs from [cursor-analytics-pipeline](https://github.com/shaysakal-web/cursor-analytics-pipeline).
+
+## 1. Personal skills (machine-wide)
+
+Check `~/.cursor/skills/` for: `ba-intake`, `data-analyst`, `data-qa`, `data-exploration`, `data-analysis`, `statistical-testing`, `ba-insights`, `analysis-context`, `insight-storytelling`, `executive-review`, `visualization-reporting`.
+
+If any missing:
+
+```powershell
+cd "C:\Users\Shay.Sakal\Documents\Cursor\cursor-analytics-pipeline"
+.\install.ps1
+```
+
+## 2. This project
+
+```powershell
+cd "C:\Users\Shay.Sakal\Documents\Cursor\cursor-analytics-pipeline"
+.\bootstrap-project.ps1 -TargetProject "<workspace root>"
+```
+
+Ensure pipeline commands land in `.cursor/commands/*.md` (not nested `commands/commands/`).
+
+## 3. Project-specific stubs
+
+If missing, scaffold (do not overwrite existing): a domain skill under `.cursor/skills/<any-descriptive-name>/SKILL.md` (e.g. `svelte-retention`, `<project>-funnel-metrics`), `docs/DEFINITIONS.md`, `docs/SEMANTIC.md`, `docs/DATA_INTEGRITY_CHECKLIST.md`, and project hooks in `docs/AGENT_ROLES.local.md`.
+
+## 4. Report
+
+List what was added vs already present. Confirm slash commands: `/analysis-intake`, `/analysis-run`, `/data-pull`, `/data-qa-check`, `/data-exploration-run`, `/data-analysis-run`, `/analysis-insights`, `/analysis-context`, `/insight-storytelling`, `/executive-review`, `/visualization-reporting`.
+
+**Do not** overwrite existing `DEFINITIONS.md` / `SEMANTIC.md` without asking.

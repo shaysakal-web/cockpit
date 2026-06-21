@@ -1,0 +1,88 @@
+{
+  "analyses": [
+    {
+      "id": "subscription_funnel_qa",
+      "label": "Subscription funnel QA",
+      "category": "Funnel QA",
+      "description": "Run funnel QA checks (df engine) for a brand and date range. Generates export JSON/CSV and optional narrative PDF.",
+      "script": "python/run_qa.py",
+      "params": [
+        {
+          "name": "brand",
+          "type": "select",
+          "flag": "--brand",
+          "label": "Brand",
+          "choices": ["goslim", "bbb", "getbodypath", "oad"],
+          "optional": false
+        },
+        {
+          "name": "date",
+          "type": "date",
+          "flag": "--date",
+          "label": "Start date",
+          "optional": false
+        },
+        {
+          "name": "end_exclusive",
+          "type": "date",
+          "flag": "--end-exclusive",
+          "label": "End date (exclusive)",
+          "optional": true
+        },
+        {
+          "name": "skip-pdf",
+          "type": "checkbox",
+          "flag": "__skip_narrative_pdf__",
+          "label": "Skip narrative PDF"
+        }
+      ],
+      "artifact": {
+        "path": "reports/qa-report-{brand}-{date_slug}.pdf",
+        "kind": "pdf"
+      },
+      "post_run": {
+        "type": "funnel_narrative_pdf"
+      }
+    },
+    {
+      "id": "daily_conversion_monitor",
+      "label": "Daily conversion monitor",
+      "category": "Daily monitors",
+      "description": "8-day conversion extract with anomaly flags and PDF report. Low-volume slices on D pool D + D−1 counts before flagging (2-day pooled promotion when volume clears the floor and rate stays anomalous).",
+      "script": "python/daily_conversion_monitor.py",
+      "params": [
+        {
+          "name": "brand",
+          "type": "select",
+          "flag": "--brand",
+          "label": "Brand",
+          "choices": [
+            "goslim",
+            "bbb",
+            "getbodypath",
+            "mbc_lq",
+            "oad_lq"
+          ],
+          "optional": false
+        },
+        {
+          "name": "date",
+          "type": "date",
+          "flag": "--date",
+          "label": "Monitor day",
+          "optional": true
+        },
+        {
+          "name": "no-pdf",
+          "type": "checkbox",
+          "flag": "--no-pdf",
+          "label": "Skip PDF export"
+        }
+      ],
+      "artifact": {
+        "path": "reports/monitor_{brand}_{date}/monitor_{brand}_{date}.pdf",
+        "kind": "pdf"
+      }
+    }
+  ]
+}
