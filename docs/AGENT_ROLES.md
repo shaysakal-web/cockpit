@@ -2,11 +2,11 @@
 
 Cross-project orchestration for analytics work. Copy this file to new projects; add a **Project hooks** section per repo.
 
-Personal role skills live in `~/.cursor/skills/` (`analysis-router`, `ba-intake`, `data-analyst`, `data-qa`, `data-exploration`, `data-analysis`, `ba-insights`, `analysis-context`, `insight-storytelling`, `executive-review`, `visualization-reporting`).
+Personal role skills live in `~/.cursor/skills/` (`analysis-router`, `ba-intake`, `data-analyst`, `data-qa`, `data-exploration`, `data-analysis`, `ba-insights`, `analysis-context`, `insight-storytelling`, `executive-review`, `visualization-reporting`, `deliverables-qa`, `final-executive-review`).
 
 Install from: [cursor-analytics-pipeline](https://github.com/shaysakal-web/cursor-analytics-pipeline) → `install.ps1`
 
-**Migration:** Pre–10-phase studies used 8 phases. Remap `phases_to_run` — old phase N → new phase N+1 for N≥4 (exploration inserted at 4; context at 7). Rollback baseline tag: `pipeline-pre-exploration-v1`.
+**Migration:** Pre–10-phase studies used 8 phases. Remap `phases_to_run` — old phase N → new phase N+1 for N≥4 (exploration inserted at 4; context at 7). Rollback tags: `pipeline-pre-exploration-v1`, `pipeline-pre-chart-viz-v1`.
 
 ---
 
@@ -28,7 +28,7 @@ model-invocable one) triages each request, then proposes a plan and waits for co
 |------|------|--------|-----------|
 | **T0 — Quick answer** | Single fact, sanity check, no decision attached | none (direct, or one `data-analyst` pull) | none |
 | **T1 — Standard diagnostic** | "Why did X move?" — rigor, no deck | 1 → 2 → … → 9 | intake, exploration, pack, analysis.md, context, story, review |
-| **T2 — Full pipeline** | Routine pack, monitor, stakeholder deck | 1 → 2 → … → 10 | all ten |
+| **T2 — Full pipeline** | Routine pack, monitor, stakeholder deck | 1 → 2 → … → 10 | all ten (phase 10 = 10a–10e publish sign-off) |
 
 Bias to **T0**. The intake contract records `tier:` and `phases_to_run:`; the
 `/analysis-run` orchestrator executes **only those phases**, honoring every gate.
@@ -39,16 +39,29 @@ Bias to **T0**. The intake contract records `tier:` and `phases_to_run:`; the
 
 | Phase | Display name | Skill id | Command | Handoff artifact |
 |-------|--------------|----------|---------|------------------|
+| — | Analysis Router | `analysis-router` | (model-invocable) | tier assignment |
 | 1 | Main Analyst | `ba-intake` | `/analysis-intake` | `intake_contract.md` |
-| 2 | Data Analyst | `data-analyst` | `/data-pull` or project pull commands | `pull_manifest.md` |
+| 2 | Data Extraction | `data-analyst` | `/data-pull` or project pull commands | `pull_manifest.md` |
 | 3 | Data QA Agent | `data-qa` | `/data-qa-check` | `data_qa_report.md` |
 | 4 | Data Exploration Agent | `data-exploration` | `/data-exploration-run` | `exploration_report.md` |
-| 5 | Python / Notebook Agent | `data-analysis` | `/data-analysis-run` | `analysis_pack.md` |
-| 6 | Executive Insight Agent | `ba-insights` | `/analysis-insights` | `analysis.md` |
+| 5 | Data Analysis Agent | `data-analysis` | `/data-analysis-run` | `analysis_pack.md` |
+| 6 | Business Analyst Insights Agent | `ba-insights` | `/analysis-insights` | `analysis.md` |
 | 7 | Analysis Context & Limitations Agent | `analysis-context` | `/analysis-context` | `analysis_context.md` |
-| 8 | Insight Synthesis / Storytelling Agent | `insight-storytelling` | `/insight-storytelling` | `story_brief.md` |
+| 8 | Insight Synthesis / Storytelling Agent | `insight-storytelling` | `/insight-storytelling` | `story_brief.md`, `chart_specs.yaml` |
 | 9 | Executive Review Agent | `executive-review` | `/executive-review` | `executive_review.md` |
-| 10 | Visualization & Reporting Analyst | `visualization-reporting` | `/visualization-reporting` | `deliverables_manifest.md` |
+| 10 | Visualization & Reporting Analyst | `visualization-reporting` (+ `deliverables-qa`, `final-executive-review`) | see **Phase 10 sub-steps** | `final_executive_review.md` → PASS |
+
+### Phase 10 sub-steps (T2 publish pack)
+
+| Sub-step | Command | Skill | Artifact | Gate |
+|----------|---------|-------|----------|------|
+| 10a | `/chart-maker-run` | `visualization-reporting` | `charts/*` | collision check passed |
+| 10b | `/chart-design-review` | `visualization-reporting` | `design_review.md` | `Verdict: PASS` |
+| 10c | `/visualization-reporting` | `visualization-reporting` | `deliverables_manifest.md` | manifest written |
+| 10d | `/deliverables-qa-check` | `deliverables-qa` | `deliverables_qa_report.md` | `Ready to publish: YES` |
+| 10e | `/final-executive-review` | `final-executive-review` | `final_executive_review.md` | `Review status: PASS` |
+
+Phase 9 reviews analysis + story **before** charts. Phase 10e reviews **rendered** deliverables.
 
 ---
 
@@ -74,6 +87,30 @@ Prerequisite to **enter** phase N:
 | Phase 8 | `analysis_context.md` → `Context status: COMPLETE` |
 | Phase 9 | `story_brief.md` exists |
 | Phase 10 | `executive_review.md` → `Review status: PASS` |
+| Phase 10 complete | `final_executive_review.md` → `Review status: PASS` |
+
+---
+
+## Reviewer isolation (phases 3, 9, 10d)
+
+The reviewer phases — **3** (`data-qa`), **9** (`executive-review`), and **10d**
+(`deliverables-qa`) — run as **isolated Task subagents with fresh context**, not inline.
+Rationale: a reviewer sharing the context window of the agent that produced the work is
+doing self-review; a fresh subagent that reads only the handoff artifacts gives a genuinely
+independent check.
+
+Rules (details in each command file):
+
+- **No context leak** — the dispatching agent passes file paths only; never its own
+  summary of the findings or an expected verdict.
+- **Write scope** — the reviewer subagent writes exactly one file: its own report artifact.
+  It never edits the work under review.
+- **Verdict verification** — after the subagent returns, the dispatcher re-reads the report
+  from disk and confirms the verdict before honoring the gate.
+- **Fallback** — if subagent dispatch is unavailable, run the skill inline and add
+  `review_isolation: inline-fallback` to the report header.
+
+Phases 10b and 10e still run inline (isolation deferred to a later pipeline version).
 
 ---
 
@@ -82,21 +119,24 @@ Prerequisite to **enter** phase N:
 | Failure | Escalate to |
 |---------|-------------|
 | Clarity BLOCKED | Main Analyst / user |
-| QA FAIL (data) | Data Analyst |
+| QA FAIL (data) | Data Extraction |
 | QA FAIL (scope) | Main Analyst |
 | Thin / missing exploration | Data Exploration (`data-exploration`) |
-| Exploration flags integrity on QA-passed data | Data QA or Data Analyst |
+| Exploration flags integrity on QA-passed data | Data QA or Data Extraction |
 | Exploration scope mismatch | Main Analyst |
-| Thin analysis_pack | Python / Notebook agent |
+| Thin analysis_pack | Data Analysis agent |
 | Thin / missing context doc | Analysis Context (`analysis-context`) |
-| Wrong analytical narrative | Executive Insight (`ba-insights`) |
+| Wrong analytical narrative | Business Analyst Insights (`ba-insights`) |
 | Wrong exec story / missing mandatory coverage | Insight Storytelling (`insight-storytelling`) |
 | Review REVISE — factual gaps | User → typically `/analysis-insights` |
 | Review REVISE — story / coverage gaps | User → typically `/insight-storytelling` |
-| Review REVISE — missing evidence in pack | Data Analysis or Data Analyst |
+| Review REVISE — missing evidence in pack | Data Analysis or Data Extraction |
 | Review REVISE — hidden limitations | User → `/analysis-context` or `/insight-storytelling` |
 | User explicit override after REVISE | Document override in `executive_review.md`, then phase 10 |
-| Wrong numbers in deck | Data Analysis or Data Analyst |
+| Wrong numbers in deck | Data Analysis or Data Extraction |
+| Design review FIX / NEEDS_REVISION | `/chart-maker-run` or `insight-storytelling` |
+| Deliverables QA NO | `/visualization-reporting` or `/chart-maker-run` |
+| Final exec REVISE | `/visualization-reporting` or `/chart-maker-run` |
 
 ---
 
@@ -112,7 +152,10 @@ Prerequisite to **enter** phase N:
 | Context doc only | — | 7 only | `/analysis-context` (requires `analysis.md`) |
 | Story brief only | — | 8 only | `/insight-storytelling` |
 | Review only | — | 9 only | `/executive-review` |
-| Build PPT/PDF/charts only | — | 10 only | `/visualization-reporting` (requires review PASS) |
+| Build PPT/PDF/charts only | — | 10 only | full 10a–10e (requires phase 9 PASS) |
+| Chart only | — | 10a–10b | `/chart-maker-run` then `/chart-design-review` |
+| Deliverables QA only | — | 10d | `/deliverables-qa-check` |
+| Final sign-off only | — | 10e | `/final-executive-review` |
 
 `/analysis-run` reads `phases_to_run` from the intake contract and runs exactly those.
 

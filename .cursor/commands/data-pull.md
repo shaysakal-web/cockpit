@@ -1,11 +1,11 @@
 ---
 name: data-pull
 description: >-
-  Data Analyst phase — SQL/Python extraction from intake contract; write pull_manifest.md
+  Data Extraction phase — SQL/Python extraction from intake contract; write pull_manifest.md
   and dated raw outputs. Use for pull data, run SQL, execute task pipeline.
 ---
 
-Run **phase 2** (Data Analyst). Load skill `data-analyst` + the project's domain skill (see `docs/AGENT_ROLES.local.md`).
+Run **phase 2** (Data Extraction). Load skill `data-analyst` + the project's domain skill (see `docs/AGENT_ROLES.local.md`).
 
 ## Stop gate (check first)
 

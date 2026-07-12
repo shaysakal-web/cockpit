@@ -26,8 +26,9 @@ Report what's missing and escalate to phase 6 or 7; do not curate without analyt
 2. Follow `~/.cursor/skills/insight-storytelling/workflows/story-playbook.md`
 3. Build § Mandatory coverage checklist before writing narrative sections
 4. Write `story_brief.md` using template in `analysis/dedicated/_template/`
-5. § Risks and limitations must **trace to** `analysis_context.md` (cite section)
-6. Every mandatory item → Key findings **or** Must address (never Excluded)
+5. Write `chart_specs.yaml` using template (story-playbook Step 5b)
+6. § Risks and limitations must **trace to** `analysis_context.md` (cite section)
+7. Every mandatory item → Key findings **or** Must address (never Excluded)
 
 ## Must not
 

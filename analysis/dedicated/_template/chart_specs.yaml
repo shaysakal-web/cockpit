@@ -1,0 +1,24 @@
+# Chart specifications — {study_id}
+# Generated in phase 8 (insight-storytelling). Consumed by phase 10a (chart-maker-run).
+# Numbers must match analysis_pack.md only.
+
+report_date: YYYY-MM-DD
+story_brief_ref: story_brief.md
+
+charts:
+  - id: slide_03_example
+    story_brief_ref: "Key findings row 1 / slide 3"
+    source_table: "analysis_pack § Example table"
+    data: tables/example.csv
+    chart_type: line
+    x: month
+    y:
+      - take_rate
+    title: "US take rate fell 4.2pp while EU held flat"
+    subtitle: "Monthly take rate, Jan–Jun YYYY · denominator: eligible sessions"
+    format: percent
+    sort_by: none
+    highlight: US
+    annotations: []
+    # chart_type options: bar, horizontal_bar, grouped_bar, stacked_bar, line,
+    # multi_line, area, scatter, histogram, pie, donut, heatmap, waterfall, funnel, table

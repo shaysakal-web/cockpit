@@ -1,11 +1,11 @@
 ---
 name: analysis-insights
 description: >-
-  Executive Insight Agent phase — comprehensive analytical narrative from analysis_pack;
+  Business Analyst Insights Agent phase — comprehensive analytical narrative from analysis_pack;
   write analysis.md with what changed, why, impact, confidence, actions.
 ---
 
-Run **phase 6** (Executive Insight Agent). Load skill `ba-insights`.
+Run **phase 6** (Business Analyst Insights Agent). Load skill `ba-insights`.
 
 ## Stop gate (check first)
 

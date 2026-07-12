@@ -13,7 +13,7 @@ When the user says **bring analytics team to party**, **add analytics pipeline**
 
 ## 1. Personal skills (machine-wide)
 
-Check `~/.cursor/skills/` for: `ba-intake`, `data-analyst`, `data-qa`, `data-exploration`, `data-analysis`, `statistical-testing`, `ba-insights`, `analysis-context`, `insight-storytelling`, `executive-review`, `visualization-reporting`.
+Check `~/.cursor/skills/` for: `ba-intake`, `data-analyst`, `data-qa`, `data-exploration`, `data-analysis`, `statistical-testing`, `ba-insights`, `analysis-context`, `insight-storytelling`, `executive-review`, `visualization-reporting`, `deliverables-qa`, `final-executive-review`.
 
 If any missing:
 
@@ -37,6 +37,6 @@ If missing, scaffold (do not overwrite existing): a domain skill under `.cursor/
 
 ## 4. Report
 
-List what was added vs already present. Confirm slash commands: `/analysis-intake`, `/analysis-run`, `/data-pull`, `/data-qa-check`, `/data-exploration-run`, `/data-analysis-run`, `/analysis-insights`, `/analysis-context`, `/insight-storytelling`, `/executive-review`, `/visualization-reporting`.
+List what was added vs already present. Confirm slash commands: `/analysis-intake`, `/analysis-run`, `/data-pull`, `/data-qa-check`, `/data-exploration-run`, `/data-analysis-run`, `/analysis-insights`, `/analysis-context`, `/insight-storytelling`, `/executive-review`, `/chart-maker-run`, `/chart-design-review`, `/visualization-reporting`, `/deliverables-qa-check`, `/final-executive-review`.
 
 **Do not** overwrite existing `DEFINITIONS.md` / `SEMANTIC.md` without asking.

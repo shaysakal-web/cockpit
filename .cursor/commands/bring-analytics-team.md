@@ -10,7 +10,7 @@ Bring the **analytics team** (ten-phase pipeline) into **this project folder**.
 
 ## Layer 1 — Personal skills (machine-wide)
 
-1. Check `~/.cursor/skills/` for: `ba-intake`, `data-analyst`, `data-qa`, `data-exploration`, `data-analysis`, `statistical-testing`, `ba-insights`, `analysis-context`, `insight-storytelling`, `executive-review`, `visualization-reporting`
+1. Check `~/.cursor/skills/` for: `ba-intake`, `data-analyst`, `data-qa`, `data-exploration`, `data-analysis`, `statistical-testing`, `ba-insights`, `analysis-context`, `insight-storytelling`, `executive-review`, `visualization-reporting`, `deliverables-qa`, `final-executive-review`
 2. If any missing, run from cloned pipeline repo:
    ```powershell
    cd "C:\Users\Shay.Sakal\Documents\Cursor\cursor-analytics-pipeline"
@@ -34,8 +34,14 @@ Copy from `cursor-analytics-pipeline/project-template/` if files are missing:
 | `.cursor/commands/analysis-context.md` | Phase 7 |
 | `.cursor/commands/insight-storytelling.md` | Phase 8 |
 | `.cursor/commands/executive-review.md` | Phase 9 |
-| `.cursor/commands/visualization-reporting.md` | Phase 10 |
+| `.cursor/commands/chart-maker-run.md` | Phase 10a |
+| `.cursor/commands/chart-design-review.md` | Phase 10b |
+| `.cursor/commands/visualization-reporting.md` | Phase 10c |
+| `.cursor/commands/deliverables-qa-check.md` | Phase 10d |
+| `.cursor/commands/final-executive-review.md` | Phase 10e |
 | `.cursor/commands/bring-analytics-team.md` | This command |
+| `lib/chart_helpers.py` | SWD chart utilities |
+| `docs/CHART_STYLE.md` | Chart style guide |
 | `docs/AGENT_ROLES.md` | Orchestration |
 | `analysis/dedicated/_template/` | Handoff templates |
 | `analysis/intake/README.md` | Ad-hoc artifacts |
@@ -60,7 +66,7 @@ If missing, create stubs and ask user to fill:
 
 List what was added vs already present. Confirm slash commands:
 
-`/analysis-intake` · `/analysis-run` · `/data-pull` · `/data-qa-check` · `/data-exploration-run` · `/data-analysis-run` · `/analysis-insights` · `/analysis-context` · `/insight-storytelling` · `/executive-review` · `/visualization-reporting`
+`/analysis-intake` · `/analysis-run` · `/data-pull` · `/data-qa-check` · `/data-exploration-run` · `/data-analysis-run` · `/analysis-insights` · `/analysis-context` · `/insight-storytelling` · `/executive-review` · `/chart-maker-run` · `/chart-design-review` · `/visualization-reporting` · `/deliverables-qa-check` · `/final-executive-review`
 
 ## Do not
 

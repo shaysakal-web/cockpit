@@ -1,11 +1,11 @@
 ---
 name: data-analysis-run
 description: >-
-  Python / Notebook Agent phase — clean data, cohort tables, period compare, drivers,
+  Data Analysis Agent phase — clean data, cohort tables, period compare, drivers,
   statistical validation; write analysis_pack.md. Use after exploration completes.
 ---
 
-Run **phase 5** (Python / Notebook Agent). Load skill `data-analysis`.
+Run **phase 5** (Data Analysis Agent). Load skill `data-analysis`.
 
 ## Stop gate (check first)
 
@@ -35,7 +35,7 @@ Report what's missing; do not analyze without exploration backlog (when phase 4 
    - Statistical validation (load `statistical-testing`; inferential comparisons only)
    - Optional diagnostic plots in `tables/` only
 5. Write `analysis_pack.md` using template in `analysis/dedicated/_template/`
-6. Summarize outputs; flag gaps for Executive Insight
+6. Summarize outputs; flag gaps for Business Analyst Insights
 
 ## Must not
 

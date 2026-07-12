@@ -57,6 +57,7 @@ Summarize from `analysis_context.md` (cite section) — do not invent:
 
 ## Files
 
+- chart_specs.yaml (phase 8 — machine-readable chart plan for phase 10a)
 - analysis.md
 - analysis_context.md
 - executive_review.md (after phase 9)

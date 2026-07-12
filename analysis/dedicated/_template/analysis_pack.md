@@ -32,11 +32,14 @@ QA report: data_qa_report.md (Ready: YES)
 
 Inferential comparisons only. Trend/monitoring views → § Comparisons flagged but not tested.
 
-| comparison_id | Metric | Groups compared | Sample sizes | Observed diff | Test used | p-value or CI | Confidence level | Verdict | Business interpretation | Warning |
-|---------------|--------|-----------------|--------------|---------------|-----------|---------------|------------------|---------|-------------------------|---------|
-| | | | | | | | | | | |
+| comparison_id | Metric | Groups compared | Sample sizes | Observed diff | Test used | p-value or CI | Observed power | N add'l / group | Underpowered | Needs volume | Verdict | Business interpretation | Warning |
+|---------------|--------|-----------------|--------------|---------------|-----------|---------------|----------------|-----------------|--------------|--------------|---------|-------------------------|---------|
+| | | | | | | | | | | | | | |
 
 Verdict values: `significant` / `directional_not_confirmed` / `inconclusive` / `insufficient_data`
+
+- **`underpowered`:** post-hoc power &lt; 80% and not significant (analytic; does not alone trigger volume hint)
+- **`needs_volume`:** insufficient or borderline sample — drives monitor volume subline (see `statistical-testing` skill § Observed power)
 
 Detail CSV (optional): `tables/statistical_validation.csv`
 
@@ -48,6 +51,6 @@ Detail CSV (optional): `tables/statistical_validation.csv`
 
 Exemption codes: `descriptive_trend` / `reporting_only` / `comparability_limit` / `census` / `external_test` / `user_accepts_directional` / `insufficient_data`
 
-## Open questions for Executive Insight
+## Open questions for Business Analyst Insights
 
 - 

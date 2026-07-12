@@ -1,7 +1,7 @@
 # AGENT_ROLES.local.md — Cockpit Run Desk hooks
 
 ```yaml
-pipeline_version: "10-phase-v1"   # must match docs/PIPELINE_MANIFEST.md in cursor-analytics-pipeline
+pipeline_version: "10-phase-v3"   # must match docs/PIPELINE_MANIFEST.md in cursor-analytics-pipeline
 ```
 
 ## Run Desk
@@ -35,7 +35,7 @@ pipeline_version: "10-phase-v1"   # must match docs/PIPELINE_MANIFEST.md in curs
 
 | Script | Run Desk job id |
 |--------|-----------------|
-| `scripts/core/data_quality_runner.py` + `crm-products.yml` | `dq_crm_products` |
+| `scripts/core/data_quality_runner.py` + `crm-products.yml` | `dq_crm_products` — scope: `crm IN ('digistore24', 'paddle')` |
 | `scripts/core/data_quality_runner.py` + `new-accounts.yml` | `dq_new_accounts` |
 | `scripts/checks/run_landing_page_qa.py` | `dq_landing_page` |
 
