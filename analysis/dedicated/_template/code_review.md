@@ -32,6 +32,14 @@ _Mandatory when used: state exactly what was inspected and why it qualifies as t
 |--------------------------------------|-------------------|--------|
 | | YES / NO — no code cause found | |
 
+### Pass 2 revisions to pass-1 findings
+
+_Fill when data QA correlation contradicts or resolves a pass-1 conclusion; write `None` if no pass-1 finding changed._
+
+| Pass-1 finding | Original conclusion | Revised conclusion | Why data QA changed / resolved it |
+|----------------|---------------------|--------------------|-----------------------------------|
+| | clean → defect / defect → clean | | |
+
 ## Reproducibility
 
 - [ ] Every output in the manifest can be re-run from documented command + parameters
