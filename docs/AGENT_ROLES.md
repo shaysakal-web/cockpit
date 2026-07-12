@@ -135,6 +135,21 @@ Bounds — escalate to the user (classic hard stop) when:
 
 ---
 
+## Parallel execution (phase 10a)
+
+Chart rendering (`/chart-maker-run`) with 3+ specs runs as **parallel batch worker
+subagents**: max 3 workers, `ceil(N/3)` specs each, sequential within a worker, each
+worker writing only its own spec ids' `charts/{id}.png|.svg|.meta.json`. The dispatcher
+then verifies **validity, not just presence** (non-zero files, PNG ≥ 1 KB, meta.json
+parses), and re-renders failed specs **per-spec-id, never per-batch**. Details in the
+command file.
+
+This does not relax the analytical scope rules: the "no parallel fishing" constraint in
+phases 4–5 is about analysis scope discipline, not execution. Chart rendering is
+mechanical work on an already-approved plan (phase 9 PASS), so parallelism is safe.
+
+---
+
 ## Escalation matrix
 
 Phase 9 REVISE rows below are handled automatically by `/analysis-run` when
