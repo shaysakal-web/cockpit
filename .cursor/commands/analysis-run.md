@@ -70,9 +70,11 @@ For each phase in `phases_to_run`, run its command and **check the gate before t
 
 | 2 | `/data-pull` | `pull_manifest.md` written |
 
-| 3 | `/data-qa-check` *(isolated reviewer — subagent)* | `data_qa_report.md` → `Ready for analysis: YES` |
+| 3a | `/data-qa-check` *(isolated reviewer — subagent)* | `data_qa_report.md` → `Ready for analysis: YES` |
 
-| 4 | `/data-exploration-run` | `exploration_report.md` → `Exploration status: COMPLETE` |
+| 3b | `/code-qa-check` *(isolated reviewer — subagent; runs after 3a, even on 3a FAIL)* | `code_review.md` → `Code review: PASS` |
+
+| 4 | `/data-exploration-run` (requires **both** 3a YES and 3b PASS) | `exploration_report.md` → `Exploration status: COMPLETE` |
 
 | 5 | `/data-analysis-run` | `analysis_pack.md` written |
 
@@ -114,7 +116,7 @@ On 10d NO or 10e REVISE → fix and re-run from the appropriate sub-step.
 
 
 
-## Reviewer isolation (phases 3, 9, 10d)
+## Reviewer isolation (phases 3a, 3b, 9, 10d)
 
 Phases marked *isolated reviewer — subagent* run in a **fresh-context Task subagent** per
 
@@ -188,7 +190,9 @@ When `executive_review.md` → `Review status: REVISE` and `auto_rerun: true` an
 
 
 
-- **QA FAIL** (phase 3 → `NO`) → halt, escalate to Data Extraction, do not proceed to phase 4
+- **QA FAIL** (3a → `NO`) → still run 3b for a complete rework brief, then halt and escalate to Data Extraction; do not proceed to phase 4
+
+- **Code review FAIL** (3b) → halt; `fail_class: extraction` → escalate to phase 2 (`/data-pull`); `fail_class: contract` → escalate to phase 1 (`/analysis-intake` / user)
 
 - **Review REVISE** (phase 9) → run **Auto-rerun on phase 9 REVISE** above; if not
 

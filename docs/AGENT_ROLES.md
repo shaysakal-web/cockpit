@@ -2,7 +2,7 @@
 
 Cross-project orchestration for analytics work. Copy this file to new projects; add a **Project hooks** section per repo.
 
-Personal role skills live in `~/.cursor/skills/` (`analysis-router`, `ba-intake`, `data-analyst`, `data-qa`, `data-exploration`, `data-analysis`, `ba-insights`, `analysis-context`, `insight-storytelling`, `executive-review`, `visualization-reporting`, `deliverables-qa`, `final-executive-review`).
+Personal role skills live in `~/.cursor/skills/` (`analysis-router`, `ba-intake`, `data-analyst`, `data-qa`, `code-qa`, `data-exploration`, `data-analysis`, `ba-insights`, `analysis-context`, `insight-storytelling`, `executive-review`, `visualization-reporting`, `deliverables-qa`, `final-executive-review`).
 
 Install from: [cursor-analytics-pipeline](https://github.com/shaysakal-web/cursor-analytics-pipeline) → `install.ps1`
 
@@ -42,7 +42,8 @@ Bias to **T0**. The intake contract records `tier:` and `phases_to_run:`; the
 | — | Analysis Router | `analysis-router` | (model-invocable) | tier assignment |
 | 1 | Main Analyst | `ba-intake` | `/analysis-intake` | `intake_contract.md` |
 | 2 | Data Extraction | `data-analyst` | `/data-pull` or project pull commands | `pull_manifest.md` |
-| 3 | Data QA Agent | `data-qa` | `/data-qa-check` | `data_qa_report.md` |
+| 3a | Data QA Agent | `data-qa` | `/data-qa-check` | `data_qa_report.md` |
+| 3b | Code QA Agent | `code-qa` | `/code-qa-check` | `code_review.md` |
 | 4 | Data Exploration Agent | `data-exploration` | `/data-exploration-run` | `exploration_report.md` |
 | 5 | Data Analysis Agent | `data-analysis` | `/data-analysis-run` | `analysis_pack.md` |
 | 6 | Business Analyst Insights Agent | `ba-insights` | `/analysis-insights` | `analysis.md` |
@@ -80,7 +81,7 @@ Prerequisite to **enter** phase N:
 | Gate | Requirement |
 |------|-------------|
 | Phase 2+ | `clarity_status: CLEAR` |
-| Phase 4 | `data_qa_report.md` → `Ready for analysis: YES` |
+| Phase 4 | `data_qa_report.md` → `Ready for analysis: YES` **and** `code_review.md` → `Code review: PASS` |
 | Phase 5 | `exploration_report.md` → `Exploration status: COMPLETE` |
 | Phase 6 | `analysis_pack.md` exists |
 | Phase 7 | `analysis.md` exists |
@@ -91,10 +92,13 @@ Prerequisite to **enter** phase N:
 
 ---
 
-## Reviewer isolation (phases 3, 9, 10d)
+## Reviewer isolation (phases 3a, 3b, 9, 10d)
 
-The reviewer phases — **3** (`data-qa`), **9** (`executive-review`), and **10d**
-(`deliverables-qa`) — run as **isolated Task subagents with fresh context**, not inline.
+The reviewer phases — **3a** (`data-qa`), **3b** (`code-qa`), **9** (`executive-review`),
+and **10d** (`deliverables-qa`) — run as **isolated Task subagents with fresh context**,
+not inline. 3b runs after 3a (even on 3a FAIL) with a two-pass order: independent code
+review first, correlation with `data_qa_report.md` second — the QA report must not be
+read before pass 1 findings are written.
 Rationale: a reviewer sharing the context window of the agent that produced the work is
 doing self-review; a fresh subagent that reads only the handoff artifacts gives a genuinely
 independent check.
@@ -161,6 +165,8 @@ as listed.
 | Clarity BLOCKED | Main Analyst / user |
 | QA FAIL (data) | Data Extraction |
 | QA FAIL (scope) | Main Analyst |
+| Code review FAIL (`fail_class: extraction`) | Data Extraction |
+| Code review FAIL (`fail_class: contract`) | Main Analyst / user |
 | Thin / missing exploration | Data Exploration (`data-exploration`) |
 | Exploration flags integrity on QA-passed data | Data QA or Data Extraction |
 | Exploration scope mismatch | Main Analyst |
