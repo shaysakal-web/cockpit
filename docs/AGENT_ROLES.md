@@ -114,7 +114,32 @@ Phases 10b and 10e still run inline (isolation deferred to a later pipeline vers
 
 ---
 
+## Auto-rerun and run state
+
+`/analysis-run` maintains **`run_state.yaml`** in the study folder (template in
+`analysis/dedicated/_template/`): planned phases, per-phase status, revision rounds.
+On restart it resumes from the first unfinished phase, re-verifying each skipped phase's
+gate line in its artifact — artifacts are the source of truth; run state is an index.
+
+On phase 9 **REVISE** with `auto_rerun: true` in the intake contract (the default;
+opt out at intake), the orchestrator reworks automatically instead of hard-stopping:
+it maps each Required-revisions Target to a phase command via the escalation matrix,
+re-runs those producer phases with the revision rows as the brief, re-runs downstream
+dependents, and dispatches a fresh phase 9 reviewer subagent.
+
+Bounds — escalate to the user (classic hard stop) when:
+
+- `auto_rerun: false` or 2 auto rounds already used (`revision_rounds` in run state)
+- A revision Target is ambiguous or points at phase 2 data issues
+- REVISE is never auto-overridden into phase 10
+
+---
+
 ## Escalation matrix
+
+Phase 9 REVISE rows below are handled automatically by `/analysis-run` when
+`auto_rerun: true` and fewer than 2 rounds are used; otherwise they escalate to the user
+as listed.
 
 | Failure | Escalate to |
 |---------|-------------|

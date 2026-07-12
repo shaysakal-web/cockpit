@@ -32,6 +32,7 @@ open_questions:
 
 - tier: T0 | T1 | T2
 - phases_to_run: 2 3 4 5 6 7 8 9 10   # subset /analysis-run executes (T1: 2-9, T2: 2-10; omit for T0)
+- auto_rerun: true   # phase 9 REVISE auto-rework, max 2 rounds; set false to require manual reruns
 - Pipeline: <task id or command>
 - Success criteria: 
 

@@ -1,7 +1,7 @@
 # AGENT_ROLES.local.md — Cockpit Run Desk hooks
 
 ```yaml
-pipeline_version: "10-phase-v3"   # must match docs/PIPELINE_MANIFEST.md in cursor-analytics-pipeline
+pipeline_version: "10-phase-v4"   # must match docs/PIPELINE_MANIFEST.md in cursor-analytics-pipeline
 ```
 
 ## Run Desk

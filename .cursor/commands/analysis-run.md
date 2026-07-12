@@ -24,9 +24,35 @@ Run the pipeline **as planned in the intake contract** — not always all ten ph
 
 1. `intake_contract.md` exists with `clarity_status: CLEAR`
 
-2. Read its `tier:` and `phases_to_run:` (e.g. `2 3 4 5 6 7 8 9 10`)
+2. Read its `tier:`, `phases_to_run:` (e.g. `2 3 4 5 6 7 8 9 10`), and `auto_rerun:`
 
 3. If `clarity_status: BLOCKED` → stop, list open questions, do not run
+
+4. Initialize or resume `run_state.yaml` (see **Run state** below)
+
+
+
+## Run state (`run_state.yaml`)
+
+
+
+Maintain `run_state.yaml` in the study folder (template: `analysis/dedicated/_template/run_state.yaml`):
+
+- **At run start:** if missing, create it from the intake contract (`study_id`, `tier`,
+
+  `phases_to_run`, `auto_rerun`).
+
+- **Resume rule:** if it already exists, skip phases recorded as `PASS` — but first
+
+  **re-verify each skipped phase's gate line in its artifact on disk**. Artifacts are the
+
+  source of truth; run state is an index, not an authority. If the artifact is missing or
+
+  its gate line disagrees, re-run that phase.
+
+- **After every phase and gate check:** update the phase entry (`status`, `artifact`,
+
+  `completed_at`) and `last_updated` before moving to the next phase.
 
 
 
@@ -110,13 +136,63 @@ When dispatching them:
 
 
 
+## Auto-rerun on phase 9 REVISE
+
+
+
+When `executive_review.md` → `Review status: REVISE` and `auto_rerun: true` and
+
+`revision_rounds < 2` in `run_state.yaml`:
+
+
+
+1. Read the **Required revisions** table in `executive_review.md`; map each row's
+
+   **Target** to a phase command via the escalation matrix in `docs/AGENT_ROLES.md`
+
+   (e.g. `ba-insights` → `/analysis-insights`, `insight-storytelling` →
+
+   `/insight-storytelling`, `analysis-context` → `/analysis-context`).
+
+2. Re-run **only the targeted producer phases**, passing the specific revision rows as
+
+   the rework brief. (Producers may see reviewer findings — the no-context-leak rule
+
+   applies only when dispatching reviewers.)
+
+3. Re-run downstream dependents of anything that changed (e.g. `analysis.md` changed →
+
+   re-run phases 7 and 8 before 9).
+
+4. Increment `revision_rounds` in `run_state.yaml`, then re-run `/executive-review` as a
+
+   fresh isolated subagent.
+
+
+
+**Escalate to the user instead of auto-rerunning** (hard stop, as before) when:
+
+
+
+- `auto_rerun: false`, or `revision_rounds` is already 2
+
+- Any revision Target is ambiguous, or points at phase 2 data issues
+
+- Never auto-override REVISE into phase 10 — phase 10 requires a genuine PASS or a
+
+  user-documented override in `executive_review.md`
+
+
+
 ## Stop conditions (hard)
 
 
 
 - **QA FAIL** (phase 3 → `NO`) → halt, escalate to Data Extraction, do not proceed to phase 4
 
-- **Review REVISE** (phase 9) → halt, report required revisions; user decides next step
+- **Review REVISE** (phase 9) → run **Auto-rerun on phase 9 REVISE** above; if not
+
+  eligible, halt and report required revisions; user decides next step
 
 - **Design review not PASS** (10b) → halt before assembly
 
@@ -132,7 +208,9 @@ When dispatching them:
 
 
 
-State: tier, phases actually run, gate results, and the path of each artifact produced.
+State: tier, phases actually run, gate results, revision rounds used, and the path of
+
+each artifact produced. Leave `run_state.yaml` reflecting the final state.
 
 
 

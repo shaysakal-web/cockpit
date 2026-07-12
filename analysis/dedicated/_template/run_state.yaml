@@ -1,0 +1,14 @@
+# Run state — maintained by /analysis-run. Index only: artifacts on disk are the
+# source of truth; the orchestrator re-verifies gate lines before trusting a PASS here.
+study_id: ""
+tier: ""
+phases_to_run: []
+auto_rerun: true          # copied from intake_contract.md
+phases: []                # one entry per executed phase, e.g.:
+# phases:
+#   - phase: 3
+#     status: PASS        # PASS | FAIL | REVISE | RUNNING
+#     artifact: data_qa_report.md
+#     completed_at: "YYYY-MM-DD HH:MM"
+revision_rounds: 0        # phase 9 auto-rerun rounds used (max 2)
+last_updated: ""

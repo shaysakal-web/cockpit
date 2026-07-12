@@ -59,12 +59,17 @@ report header.
 3. Audit story § Risks and limitations against `analysis_context.md` — hidden limits → REVISE
 4. Write `executive_review.md` using template in `analysis/dedicated/_template/`
 5. Run § Mandatory coverage audit — any MISSING → default REVISE
-6. Set `Review status: PASS | REVISE`
+6. Set `Review status: PASS | REVISE`; copy `auto_rerun:` from `intake_contract.md`
 
 ## After the subagent returns
 
-**If REVISE** → hard stop; report the numbered required revisions with target phase; user
-decides next step.
+**If REVISE** → hand off per `docs/AGENT_ROLES.md` § Auto-rerun and run state:
+
+- `auto_rerun: true` and fewer than 2 rounds used → the `/analysis-run` orchestrator
+  reworks the targeted producer phases and re-runs this review as a fresh subagent.
+- Otherwise (opt-out, round cap, ambiguous targets, or standalone invocation outside
+  `/analysis-run`) → hard stop; report the numbered required revisions with target phase;
+  user decides next step.
 
 ## Must not
 

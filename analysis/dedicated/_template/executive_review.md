@@ -8,7 +8,7 @@ Sources: analysis.md, story_brief.md, analysis_pack.md, data_qa_report.md, intak
 
 Review status: PASS | REVISE
 revision_round: 1
-auto_rerun: false
+auto_rerun: true   # copied from intake_contract.md; orchestrator honors it on REVISE (max 2 rounds)
 
 ## CEO challenge lens
 
